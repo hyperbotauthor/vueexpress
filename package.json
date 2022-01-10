@@ -1,0 +1,106 @@
+{
+  "name": "@publishvue/vueexpress",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vue UI with Express API.",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "addts": "vue add typescript",
+    "clean": "",
+    "createapp": "vue create .",
+    "dev": "",
+    "generate": "",
+    "prep": "yarn prettier && yarn build",
+    "prepare": "",
+    "prettier": "prettier -w src test",
+    "reset": "git fetch origin main && git reset --hard origin/main",
+    "test": "jest",
+    "watch": "rollup -c --watch"
+  },
+  "main": "dist/index.js",
+  "module": "",
+  "browser": "",
+  "unpkg": "",
+  "files": [
+    "*"
+  ],
+  "dependencies": {
+    "core-js": "^3.6.5",
+    "vue": "^3.0.0",
+    "vue-class-component": "^8.0.0-0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "@types/jest": "^27.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
+    "@vue/cli": "^4.5.15",
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-typescript": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/compiler-sfc": "^3.0.0",
+    "@vue/eslint-config-typescript": "^7.0.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^7.0.0",
+    "jest": "^27.4.7",
+    "node-fetch": "2.6.5",
+    "parse-git-config": "^3.0.0",
+    "prettier": "^2.5.1",
+    "rollup": "^2.63.0",
+    "rollup-plugin-typescript2": "^0.31.1",
+    "ts-jest": "^27.1.2",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.4"
+  },
+  "peerDependencies": {},
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended",
+      "@vue/typescript"
+    ],
+    "parserOptions": {
+      "parser": "@typescript-eslint/parser"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "_id": "@publishvue/vueexpress@1.0.0",
+  "bin": {},
+  "bugs": {
+    "url": "https://github.com/hyperbotauthor/vueexpress/issues",
+    "email": "hyperchessbotauthor@gmail.com"
+  },
+  "config": {},
+  "contributors": [
+    {
+      "name": "hyperbotauthor",
+      "email": "hyperchessbotauthor@gmail.com",
+      "url": "https://hyperchessbotsramblings.netlify.app"
+    }
+  ],
+  "homepage": "https://github.com/hyperbotauthor/vueexpress/#readme",
+  "keywords": [
+    "vue",
+    "express"
+  ],
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyperbotauthor/vueexpress.git"
+  },
+  "types": "dist/index.d.ts"
+}
