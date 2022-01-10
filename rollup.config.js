@@ -3,7 +3,7 @@ import typescript from 'rollup-plugin-typescript2';
 import commonjs from '@rollup/plugin-commonjs';
 import vue from "rollup-plugin-vue";
 
-const plugins = [vue(), resolve(), typescript(), commonjs()];
+const plugins = [vue(), typescript(), commonjs()];
 
 const doFormats = [
   "umd",
@@ -16,7 +16,7 @@ const doFormats = [
 
 // TODO: edit external dependencies
 const external = [
-  "dependency"
+  "vue"
 ]
 
 // TODO: edit export name
@@ -24,7 +24,7 @@ const name = "modulename"
 
 // TODO: edit global export names
 const globals = {
-  dependency: "dependency"
+  vue: "vue"
 }
 
 // TODO: exit exports

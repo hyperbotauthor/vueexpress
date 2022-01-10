@@ -5,7 +5,8 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 
-import AppComponent from "./components/HelloWorld.vue"
+//import AppComponent from "./components/HelloWorld.vue"
+import {AppComponent} from "../dist/index.js" 
 
 const data = {
   reqCnt: 0
