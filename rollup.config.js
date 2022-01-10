@@ -1,8 +1,9 @@
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
 import commonjs from '@rollup/plugin-commonjs';
+import vue from "rollup-plugin-vue";
 
-const plugins = [resolve(), typescript(), commonjs()];
+const plugins = [vue(), resolve(), typescript(), commonjs()];
 
 const doFormats = [
   "umd",

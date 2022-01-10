@@ -5,7 +5,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 
-import { AppComponent, getReqCnt } from "../dist/index"
+import AppComponent from "./components/HelloWorld.vue"
 
 const data = {
   reqCnt: 0
@@ -19,7 +19,6 @@ const data = {
     return data
   },
   mounted(){
-    getReqCnt(this)
   }
 })
 export default class App extends Vue {}
