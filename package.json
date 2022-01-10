@@ -5,6 +5,7 @@
   "description": "Vue UI with Express API.",
   "scripts": {
     "serve": "vue-cli-service serve",
+    "prodserve": "node server/server.js",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "addts": "vue add typescript",
@@ -14,7 +15,7 @@
     "generate": "",
     "prep": "yarn prettier && yarn build",
     "prepare": "",
-    "prettier": "prettier -w src test",
+    "prettier": "prettier -w src test server",
     "reset": "git fetch origin main && git reset --hard origin/main",
     "test": "jest",
     "watch": "rollup -c --watch"
