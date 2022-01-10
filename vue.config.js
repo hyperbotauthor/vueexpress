@@ -4,6 +4,9 @@ module.exports = {
   devServer: {
     host: "0.0.0.0",
     disableHostCheck: true,
+    before: (app) => {
+      app.use("/api", require("./server/api.js"))
+    }
   },
   pages: {
     index: {
