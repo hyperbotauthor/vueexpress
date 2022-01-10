@@ -1,26 +1,25 @@
 <template>
-    <AppComponent :reqCnt="reqCnt" />
+  <AppComponent :reqCnt="reqCnt" />
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component';
+import { Options, Vue } from "vue-class-component";
 
 //import AppComponent from "./components/HelloWorld.vue"
-import {AppComponent} from "../dist/index.js" 
+import { AppComponent } from "../dist/index.js";
 
 const data = {
-  reqCnt: 0
-}
+  reqCnt: 0,
+};
 
 @Options({
   components: {
     AppComponent,
   },
-  data(){
-    return data
+  data() {
+    return data;
   },
-  mounted(){
-  }
+  mounted() {},
 })
 export default class App extends Vue {}
 </script>
