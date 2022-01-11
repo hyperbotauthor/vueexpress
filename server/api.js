@@ -26,8 +26,14 @@ router.post("/reqcnt", function (req, res) {
 });
 
 router.get("/board", function (req, res) {
+  console.log("get board", req.query);
+
+  const size = parseInt(req.query.size || "400");
+
+  console.log("size", size);
+
   const { createCanvas } = require("canvas");
-  const canvas = createCanvas(200, 200);
+  const canvas = createCanvas(size, size);
   const ctx = canvas.getContext("2d");
 
   ctx.font = "30px Impact";

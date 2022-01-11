@@ -5,7 +5,7 @@
   "description": "Vue UI with Express API.",
   "scripts": {
     "heroku-postbuild": "yarn build && yarn appbuild",
-    "serve": "vue-cli-service serve",
+    "serve": "nodemon --exec 'vue-cli-service serve'",
     "prodserve": "node server/server.js",
     "appbuild": "vue-cli-service build",
     "build": "rollup -c",
@@ -55,6 +55,7 @@
     "jest": "^27.4.7",
     "node-fetch": "2.6.5",
     "node-sass": "^7.0.1",
+    "nodemon": "^2.0.15",
     "parse-git-config": "^3.0.0",
     "postcss": "^8.4.5",
     "prettier": "^2.5.1",
