@@ -34,6 +34,7 @@ export default defineComponent({
 
 <style lang="scss">
 .helloworld {
+  display: inline-block;
   .reqcnt {
     font-family: monospace;
     color: #007;

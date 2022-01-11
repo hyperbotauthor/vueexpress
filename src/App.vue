@@ -1,13 +1,16 @@
 <template>
   <div>
     <div class="nav">
-      <div class="login">
-        <button id="loginbutton">Login</button>
-        <button id="logoutbutton">Logout</button>
-        <div id="usernamediv"></div>
+      <div class="reqcnt">Total Requests: <AppComponent /></div>
+
+      <div class="logincont">
+        <div class="login">
+          <button id="loginbutton">Login</button>
+          <button id="logoutbutton">Logout</button>
+          <div id="usernamediv"></div>
+        </div>
       </div>
     </div>
-    <AppComponent />
   </div>
 </template>
 
@@ -29,11 +32,18 @@ export default class App extends Vue {}
 
 <style>
 #app {
-  text-align: center;
 }
 .nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
   padding: 5px;
   background-color: #eee;
+}
+.logincont {
+  display: inline-block;
+  padding: 2px;
+  background-color: #aff;
 }
 .login {
   display: flex;
@@ -46,6 +56,7 @@ export default class App extends Vue {}
   font-family: monospace;
   background-color: #ffa;
   font-size: 16px;
+  margin-left: 5px;
 }
 button {
   margin: 2px;
