@@ -20,7 +20,11 @@ export default defineComponent({
     onMounted(() => getReqCnt(react));
 
     const renderFunction = () => {
-      return h("div", {}, react.reqCnt);
+      return h(
+        "div",
+        { class: "helloworld" },
+        h("div", { class: "reqcnt" }, react.reqCnt)
+      );
     };
 
     return renderFunction;
@@ -28,4 +32,13 @@ export default defineComponent({
 });
 </script>
 
-<style></style>
+<style lang="scss">
+.helloworld {
+  .reqcnt {
+    font-family: monospace;
+    color: #007;
+    font-weight: bold;
+    font-size: 20px;
+  }
+}
+</style>
