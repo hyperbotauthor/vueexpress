@@ -34,3 +34,14 @@ Object.keys(pieces).forEach((name) => {
 
   fs.writeFileSync(`pieces/${name}.svg`, buff);
 });
+
+for (let bckg of ["maple.jpg"]) {
+  console.log("generating background", bckg);
+
+  const buff = Buffer.from(
+    fs.readFileSync(`backgrounds/${bckg}.b64`).toString(),
+    "base64"
+  );
+
+  fs.writeFileSync(`backgrounds/${bckg}`, buff);
+}

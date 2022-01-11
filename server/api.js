@@ -36,9 +36,17 @@ router.get("/board", async function (req, res) {
 
   console.log("fen", fen);
 
+  const bckg = req.query.bckg || "maple.jpg";
+
+  console.log("bckg", bckg);
+
   const { createCanvas, loadImage } = require("canvas");
   const canvas = createCanvas(size * 8, size * 8);
   const ctx = canvas.getContext("2d");
+
+  const bckgImage = await loadImage(path.join(__dirname, "backgrounds", bckg));
+
+  ctx.drawImage(bckgImage, 0, 0, size * 8, size * 8);
 
   let rank = 0;
 
