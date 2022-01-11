@@ -4,9 +4,10 @@
   "private": true,
   "description": "Vue UI with Express API.",
   "scripts": {
+    "heroku-postbuild": "yarn appbuild",
     "serve": "vue-cli-service serve",
     "prodserve": "node server/server.js",
-    "build": "vue-cli-service build",
+    "appbuild": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "addts": "vue add typescript",
     "clean": "",
