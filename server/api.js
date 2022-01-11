@@ -55,17 +55,21 @@ router.get("/board", async function (req, res) {
 
   console.log("flip", flip);
 
-  function uciToCoords(uci, color) {
+  function uciToCoords(uci, color, flip) {
     const file = uci.charCodeAt(0) - "a".charCodeAt(0);
     const rank = 7 - (uci.charCodeAt(1) - "1".charCodeAt(0));
-    return { file, rank, color };
+    return {
+      file: flip ? 7 - file : file,
+      rank: flip ? 7 - rank : rank,
+      color,
+    };
   }
 
   const arrowCoords = arrows
     ? arrows.split(" ").map((arrow) => {
         return [
-          uciToCoords(arrow.substring(1, 3), arrow.substring(0, 1)),
-          uciToCoords(arrow.substring(3, 5), arrow.substring(0, 1)),
+          uciToCoords(arrow.substring(1, 3), arrow.substring(0, 1), flip),
+          uciToCoords(arrow.substring(3, 5), arrow.substring(0, 1), flip),
         ];
       })
     : [];
