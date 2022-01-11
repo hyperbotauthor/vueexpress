@@ -17,7 +17,7 @@
     "generate": "",
     "prep": "yarn prettier && yarn build",
     "prepare": "",
-    "prettier": "prettier -w src test server",
+    "prettier": "prettier -w src test server public",
     "reset": "git fetch origin main && git reset --hard origin/main",
     "test": "jest",
     "watch": "rollup -c --watch"
