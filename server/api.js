@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 
 const { Game } = require("@publishvue/chessopsnpmts");
+const { checkPrimeSync } = require("crypto");
 
 // parse json payload
 router.use(express.json());
@@ -46,6 +47,27 @@ router.get("/board", async function (req, res) {
 
   console.log("moves", moves);
 
+  const arrows = req.query.arrows || "";
+
+  console.log("arrows", arrows);
+
+  function uciToCoords(uci, color) {
+    const file = uci.charCodeAt(0) - "a".charCodeAt(0);
+    const rank = 7 - (uci.charCodeAt(1) - "1".charCodeAt(0));
+    return { file, rank, color };
+  }
+
+  const arrowCoords = arrows
+    ? arrows.split(" ").map((arrow) => {
+        return [
+          uciToCoords(arrow.substring(1, 3), arrow.substring(0, 1)),
+          uciToCoords(arrow.substring(3, 5), arrow.substring(0, 1)),
+        ];
+      })
+    : [];
+
+  console.log("arrow coords", arrowCoords);
+
   if (moves) {
     const game = Game().setVariant("atomic", fen);
     game.playSansStr(moves);
@@ -80,6 +102,44 @@ router.get("/board", async function (req, res) {
     k: "black.king",
   };
 
+  for (const coords of arrowCoords) {
+    console.log("arrow", coords);
+
+    const from = coords[0];
+    const to = coords[1];
+
+    ctx.beginPath();
+    ctx.moveTo(from.file * size + size / 2, from.rank * size + size / 2);
+    ctx.lineTo(to.file * size + size / 2, to.rank * size + size / 2);
+
+    ctx.globalAlpha = 0.7;
+    ctx.lineWidth = size / 4;
+
+    const strokeStyles = {
+      r: "#a00",
+      g: "#0a0",
+      b: "#00a",
+      y: "#aa0",
+    };
+    console.log("stroke styles", strokeStyles, "color", from.color);
+
+    const strokeStyle = strokeStyles[from.color];
+    console.log("stroke style", strokeStyle);
+    ctx.strokeStyle = strokeStyle;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(
+      to.file * size + size / 2,
+      to.rank * size + size / 2,
+      (size / 2) * 0.6,
+      0,
+      2 * Math.PI
+    );
+    ctx.fillStyle = strokeStyle;
+    ctx.fill();
+  }
+
   for (let line of fen.split("/")) {
     for (let i = 1; i < 9; i++) {
       line = line.replace(new RegExp(`${i}`, "g"), Array(i).fill(" ").join(""));
@@ -90,7 +150,7 @@ router.get("/board", async function (req, res) {
     let file = 0;
 
     for (const letter of letters) {
-      console.log("letter", letter);
+      //console.log("letter", letter);
       if (letter != " ") {
         const pieceName = pieceLetterToName[letter];
         const piece = await loadImage(
