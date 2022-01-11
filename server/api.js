@@ -36,9 +36,9 @@ router.get("/board", function (req, res) {
 
   const buff = canvas.toBuffer();
 
-  const name = "temp.png";
+  const name = `board_${Math.floor(Math.random() * 1e7)}.png`;
 
-  const absPath = path.join(__dirname, name);
+  const absPath = path.join(__dirname, "temp", name);
 
   fs.writeFileSync(absPath, buff);
 
