@@ -25,20 +25,63 @@ router.post("/reqcnt", function (req, res) {
   );
 });
 
-router.get("/board", function (req, res) {
+router.get("/board", async function (req, res) {
   console.log("get board", req.query);
 
-  const size = parseInt(req.query.size || "400");
+  const size = parseInt(req.query.size || "40");
 
   console.log("size", size);
 
-  const { createCanvas } = require("canvas");
-  const canvas = createCanvas(size, size);
+  const fen = req.query.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+
+  console.log("fen", fen);
+
+  const { createCanvas, loadImage } = require("canvas");
+  const canvas = createCanvas(size * 8, size * 8);
   const ctx = canvas.getContext("2d");
 
-  ctx.font = "30px Impact";
-  ctx.rotate(0.1);
-  ctx.fillText("Awesome!", 50, 100);
+  let rank = 0;
+
+  const pieceLetterToName = {
+    P: "white.pawn",
+    N: "white.knight",
+    B: "white.bishop",
+    R: "white.rook",
+    Q: "white.queen",
+    K: "white.king",
+    p: "black.pawn",
+    n: "black.knight",
+    b: "black.bishop",
+    r: "black.rook",
+    q: "black.queen",
+    k: "black.king",
+  };
+
+  for (let line of fen.split("/")) {
+    for (let i = 1; i < 9; i++) {
+      line = line.replace(`${i}`, Array(i).fill(" ").join(""));
+    }
+
+    let letters = line.split("");
+
+    let file = 0;
+
+    for (const letter of letters) {
+      console.log("letter", letter);
+      if (letter != " ") {
+        const pieceName = pieceLetterToName[letter];
+        const piece = await loadImage(
+          path.join(__dirname, "pieces", `${pieceName}.svg`)
+        );
+
+        ctx.drawImage(piece, file * size, rank * size, size, size);
+      }
+
+      file++;
+    }
+
+    rank++;
+  }
 
   const buff = canvas.toBuffer();
 
