@@ -1,6 +1,9 @@
 var express = require("express");
 var router = express.Router();
 
+const path = require("path");
+const fs = require("fs");
+
 // parse json payload
 router.use(express.json());
 
@@ -20,6 +23,26 @@ router.post("/reqcnt", function (req, res) {
       reqCnt,
     })
   );
+});
+
+router.get("/board", function (req, res) {
+  const { createCanvas } = require("canvas");
+  const canvas = createCanvas(200, 200);
+  const ctx = canvas.getContext("2d");
+
+  ctx.font = "30px Impact";
+  ctx.rotate(0.1);
+  ctx.fillText("Awesome!", 50, 100);
+
+  const buff = canvas.toBuffer();
+
+  const name = "temp.png";
+
+  const absPath = path.join(__dirname, name);
+
+  fs.writeFileSync(absPath, buff);
+
+  res.sendFile(absPath);
 });
 
 module.exports = router;
