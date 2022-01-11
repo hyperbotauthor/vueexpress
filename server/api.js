@@ -51,6 +51,10 @@ router.get("/board", async function (req, res) {
 
   console.log("arrows", arrows);
 
+  const flip = req.query.flip === "true";
+
+  console.log("flip", flip);
+
   function uciToCoords(uci, color) {
     const file = uci.charCodeAt(0) - "a".charCodeAt(0);
     const rank = 7 - (uci.charCodeAt(1) - "1".charCodeAt(0));
@@ -140,12 +144,22 @@ router.get("/board", async function (req, res) {
     ctx.fill();
   }
 
-  for (let line of fen.split("/")) {
+  let lines = fen.split("/");
+
+  if (flip) {
+    lines.reverse();
+  }
+
+  for (let line of lines) {
     for (let i = 1; i < 9; i++) {
       line = line.replace(new RegExp(`${i}`, "g"), Array(i).fill(" ").join(""));
     }
 
     let letters = line.split("");
+
+    if (flip) {
+      letters.reverse();
+    }
 
     let file = 0;
 
