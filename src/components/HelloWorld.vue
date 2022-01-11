@@ -1,23 +1,17 @@
 <script lang="ts">
 import { defineComponent, h, reactive, onMounted } from "vue";
 
-export async function getReqCnt(react: any) {
-  const resp = await fetch("api/reqcnt");
-  const json = await resp.json();
+import { api } from "../index";
+
+async function getReqCnt(react: any) {
+  const json = await api("reqcnt", { dummy: "dummy" });
 
   react.reqCnt = json.reqCnt;
-
-  console.log(JSON.stringify(react));
 }
 
 export default defineComponent({
   name: "AppComponent",
-  props: {
-    reqCnt: {
-      type: Number,
-      default: 0,
-    },
-  },
+  props: {},
   setup(props, context) {
     const react = reactive({
       reqCnt: 0,
@@ -26,10 +20,7 @@ export default defineComponent({
     onMounted(() => getReqCnt(react));
 
     const renderFunction = () => {
-      return h("div", {}, [
-        h("div", {}, props.reqCnt),
-        h("div", {}, react.reqCnt),
-      ]);
+      return h("div", {}, react.reqCnt);
     };
 
     return renderFunction;

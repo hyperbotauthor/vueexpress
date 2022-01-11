@@ -1,11 +1,10 @@
 <template>
-  <AppComponent :reqCnt="reqCnt" />
+  <AppComponent />
 </template>
 
 <script lang="ts">
 import { Options, Vue } from "vue-class-component";
 
-//import AppComponent from "./components/HelloWorld.vue"
 import { AppComponent } from "../dist/index.js";
 
 const data = {
