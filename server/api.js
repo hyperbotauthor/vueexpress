@@ -82,7 +82,7 @@ router.get("/board", async function (req, res) {
 
   for (let line of fen.split("/")) {
     for (let i = 1; i < 9; i++) {
-      line = line.replace(`${i}`, Array(i).fill(" ").join(""));
+      line = line.replace(new RegExp(`${i}`, "g"), Array(i).fill(" ").join(""));
     }
 
     let letters = line.split("");
@@ -90,7 +90,7 @@ router.get("/board", async function (req, res) {
     let file = 0;
 
     for (const letter of letters) {
-      //console.log("letter", letter);
+      console.log("letter", letter);
       if (letter != " ") {
         const pieceName = pieceLetterToName[letter];
         const piece = await loadImage(
