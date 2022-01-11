@@ -1048,6 +1048,11 @@
     "@babel/helper-validator-identifier" "^7.16.7"
     to-fast-properties "^2.0.0"
 
+"@badrap/result@^0.2.8":
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/@badrap/result/-/result-0.2.8.tgz#76b835c17c4c2d12575a4b205a7df3d14e3ad39c"
+  integrity sha512-zC6LgWe8QWSTwxfQVoRyieFaTbCJ2WYvpJdZ0fONoUJT1ln/oWNb3zBPlPP5J9ehLAaFIZJ7aB8oISzYFs6grQ==
+
 "@bcoe/v8-coverage@^0.2.3":
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
@@ -1406,6 +1411,26 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
+
+"@publishvue/chessground@^8.1.7-maple":
+  version "8.1.7-maple"
+  resolved "https://registry.yarnpkg.com/@publishvue/chessground/-/chessground-8.1.7-maple.tgz#1aa9b8f27deaf2d9cfdfea0ad1a4ab859e701c42"
+  integrity sha512-NnRhxU3NG/FG1HKex49mlQ6s/lFK5iSSjSKpx8sZTzVQcYnuAKLgw7xV3/I2UK7/mzvoyegLBJE+lyTY6UQnfQ==
+
+"@publishvue/chessopsnpmts@^1.0.22":
+  version "1.0.22"
+  resolved "https://registry.yarnpkg.com/@publishvue/chessopsnpmts/-/chessopsnpmts-1.0.22.tgz#8cf755f746d9a01abe63422f32c17af62156dfcd"
+  integrity sha512-LQx3Jl3+vnpYF7WWvvwTqovcjeBeGW5FZNVRgJD+ubfy7N4T8y9Tx57akdiOFkchJvdXHBNf4H/hrtBskziagg==
+  dependencies:
+    "@badrap/result" "^0.2.8"
+    "@publishvue/chessground" "^8.1.7-maple"
+    "@publishvue/vueutils" "^1.0.13"
+    lodash "^4.17.21"
+
+"@publishvue/vueutils@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@publishvue/vueutils/-/vueutils-1.0.13.tgz#de8922d1610e21f203bdfb0ca7287380341d2d34"
+  integrity sha512-RN5zowVApOuaPua1GaIJpacNQYZnxgFz7k/JN2Hp0G8Hd8MJRs9FgRW8ZuGyWImy4ZQOtUhWgjvEhkO9eDsrAQ==
 
 "@rollup/plugin-commonjs@^21.0.1":
   version "21.0.1"

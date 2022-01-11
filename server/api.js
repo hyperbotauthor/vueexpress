@@ -4,6 +4,8 @@ var router = express.Router();
 const path = require("path");
 const fs = require("fs");
 
+const { Game } = require("@publishvue/chessopsnpmts");
+
 // parse json payload
 router.use(express.json());
 
@@ -32,13 +34,26 @@ router.get("/board", async function (req, res) {
 
   console.log("size", size);
 
-  const fen = req.query.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+  let fen = req.query.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
   console.log("fen", fen);
 
   const bckg = req.query.bckg || "maple.jpg";
 
   console.log("bckg", bckg);
+
+  const moves = req.query.moves || "";
+
+  console.log("moves", moves);
+
+  if (moves) {
+    const game = Game().setVariant("atomic", fen);
+    game.playSansStr(moves);
+
+    fen = game.reportFen().split(" ")[0];
+
+    console.log("moves fen", fen);
+  }
 
   const { createCanvas, loadImage } = require("canvas");
   const canvas = createCanvas(size * 8, size * 8);
@@ -75,7 +90,7 @@ router.get("/board", async function (req, res) {
     let file = 0;
 
     for (const letter of letters) {
-      console.log("letter", letter);
+      //console.log("letter", letter);
       if (letter != " ") {
         const pieceName = pieceLetterToName[letter];
         const piece = await loadImage(

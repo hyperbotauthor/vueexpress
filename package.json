@@ -30,6 +30,7 @@
     "*"
   ],
   "dependencies": {
+    "@publishvue/chessopsnpmts": "^1.0.22",
     "canvas": "^2.8.0",
     "core-js": "^3.6.5",
     "express": "^4.17.2",
