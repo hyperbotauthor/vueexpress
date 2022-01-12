@@ -14,8 +14,18 @@
     <div class="content">
       <a
         href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant=&flip="
+        rel="noopener noreferror"
+        target="_blank"
         >Board API</a
       >
+      (
+      <a
+        href="https://lichess.org/@/hyperchessbotauthor/blog/board-image-api/j9TaGcbL"
+        rel="noopener noreferror"
+        target="_blank"
+        >Board API Docs</a
+      >
+      )
     </div>
     <div class="chat">
       <input type="text" v-on:keyup="chatmsgentered" />
