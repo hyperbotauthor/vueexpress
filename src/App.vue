@@ -11,6 +11,9 @@
         </div>
       </div>
     </div>
+    <div class="content">
+      <a href="/api/board?fen=&moves=&arrows=&circles=&size=">Board API</a>
+    </div>
   </div>
 </template>
 
@@ -60,5 +63,13 @@ export default class App extends Vue {}
 }
 button {
   margin: 2px;
+}
+.content {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #ffd;
+}
+.content a {
+  font-size: 20px;
 }
 </style>
