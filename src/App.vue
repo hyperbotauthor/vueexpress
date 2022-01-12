@@ -12,7 +12,8 @@
       </div>
     </div>
     <div class="content">
-      <a href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant="
+      <a
+        href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant=&flip="
         >Board API</a
       >
     </div>
