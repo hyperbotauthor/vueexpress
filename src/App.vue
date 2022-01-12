@@ -17,8 +17,15 @@
         >Board API</a
       >
     </div>
-    <pre
-      >{{ event }}
+    <div class="chat">
+      <input type="text" v-on:keyup="chatmsgentered" />
+      <div class="message" v-for="msg in messages" :key="`Math.random()`">
+        <div class="time">{{ new Date(msg.time).toLocaleString() }}</div>
+        <div class="msg">{{ msg.msg }}</div>
+      </div>
+    </div>
+    <pre>
+      {{ event }}
     </pre>
   </div>
 </template>
@@ -34,7 +41,24 @@ import { AppComponent } from "../dist/index.js";
   data() {
     return {
       event: {},
+      messages: [],
     };
+  },
+  methods: {
+    chatmsgentered(ev) {
+      if (ev.keyCode === 13) {
+        const msg = ev.target.value;
+        console.log("sending", msg);
+        ev.target.value = "";
+        fetch("/api/post", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ msg }),
+        });
+      }
+    },
   },
   mounted() {
     const source = new EventSource("/api/events");
@@ -52,6 +76,10 @@ import { AppComponent } from "../dist/index.js";
 
       if (data.kind !== "tick") {
         console.log("event", data);
+      }
+
+      if (data.kind === "chat") {
+        this.messages = data.messages;
       }
 
       // Display the event data in the `content` div
@@ -100,7 +128,30 @@ button {
   padding: 5px;
   background-color: #ffd;
 }
+.chat {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #fdf;
+}
 .content a {
   font-size: 20px;
+}
+.message {
+  padding: 5px;
+  margin: 3px;
+  background-color: #dff;
+  font-weight: bold;
+  color: #070;
+}
+.message .time {
+  display: inline-block;
+  margin-right: 10px;
+  font-family: monospace;
+  color: #007;
+}
+.message .msg {
+  display: inline-block;
+  padding: 3px;
+  background-color: #ffa;
 }
 </style>

@@ -252,6 +252,8 @@ router.get("/board", async function (req, res) {
   }
 });
 
+let messages = [];
+
 let eventSources = [];
 
 function addEventSource(res) {
@@ -290,6 +292,26 @@ router.get("/events", function (req, res) {
   res.write("retry: 10000\n\n");
 
   addEventSource(res);
+});
+
+const MAX_MESSAGES = 20;
+
+router.post("/post", function (req, res) {
+  const msg = req.body.msg;
+
+  messages.unshift({
+    msg,
+    time: Date.now(),
+  });
+
+  if (messages.length > MAX_MESSAGES) {
+    messages = messages.slice(0, MAX_MESSAGES);
+  }
+
+  sendEvent({
+    kind: "chat",
+    messages,
+  });
 });
 
 module.exports = router;
