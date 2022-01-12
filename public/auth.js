@@ -11,7 +11,7 @@ const oauth = new OAuth2AuthCodePKCE.OAuth2AuthCodePKCE({
   authorizationUrl: `${lichessHost}/oauth`,
   tokenUrl: `${lichessHost}/api/token`,
   clientId,
-  scopes: ["email:read", "tournament:write"],
+  scopes: [],
   redirectUrl: clientUrl,
   onAccessTokenExpiry: (refreshAccessToken) => refreshAccessToken(),
   onInvalidGrant: (_retry) => {},
