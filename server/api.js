@@ -4,6 +4,8 @@ var router = express.Router();
 const path = require("path");
 const fs = require("fs");
 
+const fetch = require("node-fetch");
+
 const { Game, Pos } = require("@publishvue/chessopsnpmts");
 const { checkPrimeSync } = require("crypto");
 
@@ -296,12 +298,25 @@ router.get("/events", function (req, res) {
 
 const MAX_MESSAGES = 20;
 
-router.post("/post", function (req, res) {
+router.post("/post", async function (req, res) {
+  console.log("post", req.body);
+
   const msg = req.body.msg;
+
+  const accountResp = await fetch("https://lichess.org/api/account", {
+    headers: {
+      Authorization: `Bearer ${req.body.token}`,
+    },
+  });
+
+  const account = await accountResp.json();
+
+  console.log("account", account);
 
   messages.unshift({
     msg,
     time: Date.now(),
+    account,
   });
 
   if (messages.length > MAX_MESSAGES) {

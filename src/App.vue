@@ -20,12 +20,13 @@
     <div class="chat">
       <input type="text" v-on:keyup="chatmsgentered" />
       <div class="message" v-for="msg in messages" :key="`Math.random()`">
+        <div class="poster">{{ msg.account.username || "@nonymous" }}</div>
         <div class="time">{{ new Date(msg.time).toLocaleString() }}</div>
         <div class="msg">{{ msg.msg }}</div>
       </div>
     </div>
-    <pre>
-      {{ event }}
+    <pre
+      >{{ event }}
     </pre>
   </div>
 </template>
@@ -55,7 +56,10 @@ import { AppComponent } from "../dist/index.js";
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ msg }),
+          body: JSON.stringify({
+            msg,
+            token: localStorage.getItem("LICHESS_TOKEN"),
+          }),
         });
       }
     },
@@ -143,6 +147,13 @@ button {
   font-weight: bold;
   color: #070;
 }
+.message .poster {
+  display: inline-block;
+  margin-right: 10px;
+  font-family: monospace;
+  color: #707;
+  font-size: 18px;
+}
 .message .time {
   display: inline-block;
   margin-right: 10px;
@@ -153,5 +164,6 @@ button {
   display: inline-block;
   padding: 3px;
   background-color: #ffa;
+  font-family: Verdana;
 }
 </style>
