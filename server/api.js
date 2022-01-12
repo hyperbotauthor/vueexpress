@@ -92,6 +92,7 @@ router.get("/board", async function (req, res) {
     fischer: "fischer.jpg",
     kasparov: "kasparov.jpg",
     carlsen: "carlsen.jpeg",
+    steinitz: "steinitz.jpg",
   };
 
   if (player) {
