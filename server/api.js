@@ -265,9 +265,13 @@ function addEventSource(res) {
   });
 }
 
+function sendEventRes(ev, res) {
+  res.write("data: " + JSON.stringify(ev) + "\n\n");
+}
+
 function sendEvent(ev) {
   for (let es of eventSources) {
-    es.res.write("data: " + JSON.stringify(ev) + "\n\n");
+    sendEventRes(ev, es.res);
   }
 }
 
@@ -292,6 +296,14 @@ router.get("/events", function (req, res) {
 
   // Tell the client to retry every 10 seconds if connectivity is lost
   res.write("retry: 10000\n\n");
+
+  sendEventRes(
+    {
+      kind: "chat",
+      messages,
+    },
+    res
+  );
 
   addEventSource(res);
 });
