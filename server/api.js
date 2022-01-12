@@ -252,4 +252,42 @@ router.get("/board", async function (req, res) {
   }
 });
 
+let eventSources = [];
+
+function addEventSource(res) {
+  eventSources.push({
+    res,
+    created: Date.now(),
+  });
+}
+
+function sendEvent(ev) {
+  for (let es of eventSources) {
+    es.res.write(JSON.stringify(ev) + "\n\n");
+  }
+}
+
+setInterval(() => {
+  sendEvent({
+    kind: "tick",
+  });
+}, 5000);
+
+router.get("/events", async function (req, res) {
+  console.log("/events");
+
+  res.set({
+    "Cache-Control": "no-cache",
+    "Content-Type": "text/event-stream",
+    Connection: "keep-alive",
+  });
+
+  res.flushHeaders();
+
+  // Tell the client to retry every 10 seconds if connectivity is lost
+  res.write("retry: 10000\n\n");
+
+  addEventSource(res);
+});
+
 module.exports = router;

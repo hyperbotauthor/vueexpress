@@ -17,6 +17,9 @@
         >Board API</a
       >
     </div>
+    <pre>
+      {{ event }}
+    </pre>
   </div>
 </template>
 
@@ -29,9 +32,20 @@ import { AppComponent } from "../dist/index.js";
     AppComponent,
   },
   data() {
-    return {};
+    return {
+      event: {},
+    };
   },
-  mounted() {},
+  mounted() {
+    const source = new EventSource("/events");
+
+    source.addEventListener("message", (message) => {
+      console.log("event", message);
+
+      // Display the event data in the `content` div
+      this.event = message.data;
+    });
+  },
 })
 export default class App extends Vue {}
 </script>
