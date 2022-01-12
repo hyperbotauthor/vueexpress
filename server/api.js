@@ -4,7 +4,7 @@ var router = express.Router();
 const path = require("path");
 const fs = require("fs");
 
-const { Game } = require("@publishvue/chessopsnpmts");
+const { Game, Pos } = require("@publishvue/chessopsnpmts");
 const { checkPrimeSync } = require("crypto");
 
 // parse json payload
@@ -31,13 +31,15 @@ router.post("/reqcnt", function (req, res) {
 router.get("/board", async function (req, res) {
   console.log("get board", req.query);
 
-  const size = parseInt(req.query.size || "40");
+  const splitter = new RegExp(" |,|_");
 
-  let fen = req.query.fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+  const size = parseInt(req.query.size || "40");
 
   const bckg = req.query.bckg || "maple.jpg";
 
   const moves = req.query.moves || "";
+
+  console.log(moves.split(splitter));
 
   const arrows = req.query.arrows || "";
 
@@ -46,6 +48,12 @@ router.get("/board", async function (req, res) {
   const player = req.query.player || "";
 
   const flip = req.query.flip === "true";
+
+  const variant = req.query.variant || "atomic";
+
+  const startFenPos = Pos().setVariant(variant);
+
+  let fen = req.query.fen || startFenPos.reportFen().split(" ")[0];
 
   function uciToCoords(uci, color, flip) {
     const file = uci.charCodeAt(0) - "a".charCodeAt(0);
@@ -58,7 +66,7 @@ router.get("/board", async function (req, res) {
   }
 
   const arrowCoords = arrows
-    ? arrows.split(" ").map((arrow) => {
+    ? arrows.split(splitter).map((arrow) => {
         return [
           uciToCoords(arrow.substring(1, 3), arrow.substring(0, 1), flip),
           uciToCoords(arrow.substring(3, 5), arrow.substring(0, 1), flip),
@@ -67,7 +75,7 @@ router.get("/board", async function (req, res) {
     : [];
 
   const circleCoords = circles
-    ? circles.split(" ").map((circle) => {
+    ? circles.split(splitter).map((circle) => {
         return uciToCoords(
           circle.substring(1, 3),
           circle.substring(0, 1),
@@ -77,8 +85,8 @@ router.get("/board", async function (req, res) {
     : [];
 
   if (moves) {
-    const game = Game().setVariant("atomic", fen);
-    game.playSansStr(moves);
+    const game = Game().setVariant(variant, fen);
+    game.playSans(moves.split(splitter));
 
     fen = game.reportFen().split(" ")[0];
   }
@@ -93,6 +101,8 @@ router.get("/board", async function (req, res) {
     kasparov: "kasparov.jpg",
     carlsen: "carlsen.jpeg",
     steinitz: "steinitz.jpg",
+    karpov: "karpov.jpg",
+    anand: "anand.jpeg",
   };
 
   if (player) {

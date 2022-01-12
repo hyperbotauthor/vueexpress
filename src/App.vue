@@ -12,7 +12,9 @@
       </div>
     </div>
     <div class="content">
-      <a href="/api/board?fen=&moves=&arrows=&circles=&size=">Board API</a>
+      <a href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant="
+        >Board API</a
+      >
     </div>
   </div>
 </template>
