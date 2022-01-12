@@ -263,17 +263,19 @@ function addEventSource(res) {
 
 function sendEvent(ev) {
   for (let es of eventSources) {
-    es.res.write(JSON.stringify(ev) + "\n\n");
+    es.res.write("data: " + JSON.stringify(ev) + "\n\n");
   }
 }
 
 setInterval(() => {
   sendEvent({
     kind: "tick",
+    time: Date.now(),
+    reqCnt,
   });
 }, 5000);
 
-router.get("/events", async function (req, res) {
+router.get("/events", function (req, res) {
   console.log("/events");
 
   res.set({

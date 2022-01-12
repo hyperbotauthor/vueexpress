@@ -17,8 +17,8 @@
         >Board API</a
       >
     </div>
-    <pre>
-      {{ event }}
+    <pre
+      >{{ event }}
     </pre>
   </div>
 </template>
@@ -37,14 +37,28 @@ import { AppComponent } from "../dist/index.js";
     };
   },
   mounted() {
-    const source = new EventSource("/events");
+    const source = new EventSource("/api/events");
 
-    source.addEventListener("message", (message) => {
-      console.log("event", message);
+    source.onopen = () => {
+      console.log("source opened");
+    };
+
+    source.onerror = () => {
+      console.error("source failed");
+    };
+
+    source.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
+
+      if (data.kind !== "tick") {
+        console.log("event", data);
+      }
 
       // Display the event data in the `content` div
-      this.event = message.data;
-    });
+      this.event = data;
+    };
+
+    console.log(source);
   },
 })
 export default class App extends Vue {}
