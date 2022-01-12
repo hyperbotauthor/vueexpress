@@ -43,6 +43,8 @@ router.get("/board", async function (req, res) {
 
   const circles = req.query.circles || "";
 
+  const player = req.query.player || "";
+
   const flip = req.query.flip === "true";
 
   function uciToCoords(uci, color, flip) {
@@ -82,8 +84,21 @@ router.get("/board", async function (req, res) {
   }
 
   const { createCanvas, loadImage } = require("canvas");
-  const canvas = createCanvas(size * 8, size * 8);
+  const deltaWidth = player ? size * 8 : 0;
+  const canvas = createCanvas(size * 8 + deltaWidth, size * 8);
   const ctx = canvas.getContext("2d");
+
+  const playerPaths = {
+    fischer: "fischer.jpg",
+  };
+
+  if (player) {
+    const playerImg = await loadImage(
+      path.join(__dirname, "..", "players", `${playerPaths[player]}`)
+    );
+
+    ctx.drawImage(playerImg, size * 8, 0, size * 8, size * 8);
+  }
 
   const bckgImage = await loadImage(path.join(__dirname, "backgrounds", bckg));
 
