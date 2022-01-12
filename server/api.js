@@ -90,6 +90,8 @@ router.get("/board", async function (req, res) {
 
   const playerPaths = {
     fischer: "fischer.jpg",
+    kasparov: "kasparov.jpg",
+    carlsen: "carlsen.jpeg",
   };
 
   if (player) {
