@@ -44,14 +44,50 @@
           >
         </div>
         <div class="seeks">
-          <button v-on:click="createseek">Create Seek</button>
+          <button
+            v-on:click="
+              createseek({
+                variant: 'atomic',
+                initialTime: 60,
+                increment: 0,
+                rounds: 3,
+              })
+            "
+          >
+            Atomic 1 + 0 ( 3 )
+          </button>
+          <button
+            v-on:click="
+              createseek({
+                variant: 'atomic',
+                initialTime: 180,
+                increment: 0,
+                rounds: 1,
+              })
+            "
+          >
+            Atomic 3 + 0 ( 1 )
+          </button>
+          <button
+            v-on:click="
+              createseek({
+                variant: 'atomic',
+                initialTime: 180,
+                increment: 2,
+                rounds: 1,
+              })
+            "
+          >
+            Atomic 3 + 2 ( 1 )
+          </button>
+
           <div class="seek" v-for="seek in seeks" :key="`Math.random()`">
             <div class="variant">{{ seek.variant.display() }}</div>
-            <div class="iniitaltime">{{ seek.initialTime }}</div>
+            <div class="initialtime">{{ seek.initialTime }}</div>
             +
             <div class="increment">{{ seek.increment }}</div>
             <div class="rated">{{ seek.rated ? "Rated" : "Casual" }}</div>
-            <div class="rounds">{{ seek.rounds }}</div>
+            <div class="rounds">( {{ seek.rounds }} )</div>
             by
             <div class="createdby">{{ seek.createdBy.username }}</div>
             <button
@@ -140,8 +176,8 @@ function post(endpoint, payloadOpt) {
         this.seeks = seeks;
       });
     },
-    createseek() {
-      this.createSeek({ variant: "atomic" });
+    createseek(params) {
+      this.createSeek(params);
     },
     chatmsgentered(ev) {
       if (ev.keyCode === 13) {
@@ -338,24 +374,32 @@ button {
 .variant {
   color: #070;
   font-weight: bold;
+  width: 150px;
 }
 .initialtime {
   color: #007;
+  margin-left: 10px;
+  width: 40px;
 }
 .increment {
   color: #700;
+  margin-left: 10px;
 }
 .rated {
   color: #077;
+  margin-left: 10px;
 }
 .rounds {
   color: #707;
+  margin-right: 10px;
 }
 .createdby {
   font-weight: bold;
   color: #770;
+  margin-left: 5px;
 }
 .revoke {
   background-color: #fdd;
+  margin-left: 20px;
 }
 </style>

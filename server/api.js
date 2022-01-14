@@ -126,7 +126,7 @@ function setupRouter() {
 
   // middleware that increases reqCnt on every request
   router.use(function timeLog(req, res, next) {
-    //console.log(`request ${reqCnt++}`);
+    reqCnt++;
     next();
   });
 
@@ -387,11 +387,18 @@ function setupRouter() {
     const params = req.body;
 
     const variant = params.variant;
+    const initialTime = params.initialTime;
+    const increment = params.increment;
+    const rounds = params.rounds;
 
-    console.log("create seek", { variant });
+    console.log("create seek", { variant, initialTime, increment, rounds });
 
     if (req.profile) {
       const seek = new Seek().setVariant(variant);
+
+      if (initialTime !== undefined) seek.initialTime = initialTime;
+      if (increment !== undefined) seek.increment = increment;
+      if (rounds !== undefined) seek.rounds = rounds;
 
       seek.createdBy = req.profile;
 
