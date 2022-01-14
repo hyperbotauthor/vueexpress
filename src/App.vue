@@ -11,33 +11,48 @@
         </div>
       </div>
     </div>
-    <div class="content">
-      <a
-        href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant=&flip="
-        rel="noopener noreferror"
-        target="_blank"
-        >Board API</a
-      >
-      (
-      <a
-        href="https://lichess.org/@/hyperchessbotauthor/blog/board-image-api/j9TaGcbL"
-        rel="noopener noreferror"
-        target="_blank"
-        >Board API Docs</a
-      >
-      )
-    </div>
-    <div class="chat">
-      <input type="text" v-on:keyup="chatmsgentered" />
-      <div class="message" v-for="msg in messages" :key="`Math.random()`">
-        <div class="poster">{{ msg.account.username || "@nonymous" }}</div>
-        <div class="time">{{ new Date(msg.time).toLocaleString() }}</div>
-        <div class="msg">{{ msg.msg }}</div>
+
+    <div class="maincont">
+      <div class="users">
+        <div
+          class="loggeduser"
+          v-for="username in Object.keys(usersCache || {})"
+          :key="`Math.random()`"
+        >
+          {{ username }}
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="content">
+          <a
+            href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant=&flip="
+            rel="noopener noreferror"
+            target="_blank"
+            >Board API</a
+          >
+          (
+          <a
+            href="https://lichess.org/@/hyperchessbotauthor/blog/board-image-api/j9TaGcbL"
+            rel="noopener noreferror"
+            target="_blank"
+            >Board API Docs</a
+          >
+          )
+        </div>
+        <div class="chat">
+          <input type="text" v-on:keyup="chatmsgentered" />
+          <div class="message" v-for="msg in messages" :key="`Math.random()`">
+            <div class="poster">{{ msg.account.username || "@nonymous" }}</div>
+            <div class="time">{{ new Date(msg.time).toLocaleString() }}</div>
+            <div class="msg">{{ msg.msg }}</div>
+          </div>
+        </div>
+        <pre
+          >{{ event }}
+        </pre>
       </div>
     </div>
-    <pre
-      >{{ event }}
-    </pre>
   </div>
 </template>
 
@@ -71,6 +86,7 @@ function post(endpoint, payloadOpt) {
     return {
       event: {},
       messages: [],
+      usersCache: {},
     };
   },
   methods: {
@@ -97,12 +113,24 @@ function post(endpoint, payloadOpt) {
     source.onmessage = (ev) => {
       const data = JSON.parse(ev.data);
 
-      if (data.kind !== "tick") {
+      if (data.kind === "tick") {
+        this.usersCache = data.usersCache;
+      } else {
         console.log("event", data);
       }
 
       if (data.kind === "chat") {
         this.messages = data.messages;
+
+        if (data.usersCache) {
+          this.usersCache = data.usersCache;
+        }
+      }
+
+      if (data.kind === "users") {
+        this.usersCache = data.usersCache;
+
+        console.log(this.usersCache);
       }
 
       // Display the event data in the `content` div
@@ -112,6 +140,10 @@ function post(endpoint, payloadOpt) {
     console.log(source);
 
     post("/api/login");
+
+    setInterval(() => {
+      post("/api/login");
+    }, 10000);
   },
 })
 export default class App extends Vue {}
@@ -119,6 +151,18 @@ export default class App extends Vue {}
 
 <style>
 #app {
+}
+.maincont {
+  display: flex;
+  width: 100%;
+}
+.main {
+  width: 100%;
+}
+.users {
+  min-width: 100px;
+  max-width: 100px;
+  overflow: hidden;
 }
 .nav {
   display: flex;
@@ -186,5 +230,10 @@ button {
   padding: 3px;
   background-color: #ffa;
   font-family: Verdana;
+}
+.loggeduser {
+  padding: 3px;
+  background-color: #ffa;
+  margin: 3px;
 }
 </style>

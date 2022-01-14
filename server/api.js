@@ -16,6 +16,7 @@ let eventSources = [];
 const MAX_MESSAGES = 20;
 
 let userIdsCache = {};
+let usersCache = {};
 
 const client = new MongoClient(MONGODB_URI, {
   useNewUrlParser: true,
@@ -24,6 +25,7 @@ const client = new MongoClient(MONGODB_URI, {
 
 var appDb = null;
 var userIdsColl = null;
+var usersColl = null;
 
 function connect(request) {
   return new Promise((resolve) => {
@@ -35,6 +37,11 @@ function connect(request) {
         console.log("MongoDb connected!");
         appDb = client.db("vueexpress");
         userIdsColl = appDb.collection("userids");
+        usersColl = appDb.collection("users");
+        if (false) {
+          userIdsColl.drop();
+          usersColl.drop();
+        }
         resolve(true);
       }
     });
@@ -82,18 +89,34 @@ function setupRouter() {
   }
 
   function sendEvent(ev) {
+    console.log("send to all", ev);
     for (let es of eventSources) {
       sendEventRes(ev, es.res);
     }
   }
 
   setInterval(() => {
+    const activeUsersCache = {};
+
+    for (let userId in usersCache) {
+      const profile = usersCache[userId];
+
+      const elapsedSinceSeen = Date.now() - profile.lastSeenAt;
+
+      console.log(elapsedSinceSeen);
+
+      if (elapsedSinceSeen < 30000) {
+        activeUsersCache[userId] = usersCache[userId];
+      }
+    }
+
     sendEvent({
       kind: "tick",
       time: Date.now(),
       reqCnt,
+      usersCache: activeUsersCache,
     });
-  }, 5000);
+  }, 10000);
 
   router.get("/events", function (req, res) {
     console.log("/events");
@@ -113,6 +136,7 @@ function setupRouter() {
       {
         kind: "chat",
         messages,
+        usersCache,
       },
       res
     );
@@ -151,6 +175,50 @@ function setupRouter() {
     });
   });
 
+  async function loginByUserId(userId, profile) {
+    console.log("login by user id", userId, profile);
+
+    if (!profile) {
+      console.log("looking up profile in cache");
+
+      profile = usersCache[userId];
+
+      if (!profile) {
+        console.log("looking up profile in db");
+
+        profile = await usersColl.findOne({ _id: userId });
+      }
+
+      if (!profile) {
+        console.error("fatal, could not get profile");
+
+        return;
+      }
+
+      profile.lastSeenAt = Date.now();
+
+      console.log("obtained profile", profile);
+
+      usersColl
+        .updateOne(
+          {
+            _id: userId,
+          },
+          {
+            $set: profile,
+          },
+          {
+            upsert: true,
+          }
+        )
+        .then((result) => {
+          console.log("user upsert result", result);
+        });
+
+      usersCache[userId] = profile;
+    }
+  }
+
   router.post("/login", async function (req, res) {
     const token = req.body.token;
 
@@ -162,6 +230,8 @@ function setupRouter() {
       console.log("cached id", cachedId);
 
       res.send(JSON.stringify({ cachedId }));
+
+      loginByUserId(cachedId);
 
       return;
     }
@@ -176,6 +246,8 @@ function setupRouter() {
       userIdsCache[token] = userId;
 
       res.send(JSON.stringify({ userId }));
+
+      loginByUserId(userId);
 
       return;
     }
@@ -209,8 +281,32 @@ function setupRouter() {
           }
         )
         .then((result) => {
-          console.log(result);
+          console.log("user id upsert result", result);
         });
+
+      const profile = {
+        username: account.username,
+        identifiedAt: Date.now(),
+        lastSeenAt: Date.now(),
+      };
+
+      usersColl
+        .updateOne(
+          {
+            _id: userId,
+          },
+          {
+            $set: profile,
+          },
+          {
+            upsert: true,
+          }
+        )
+        .then((result) => {
+          console.log("user upsert result", result);
+        });
+
+      loginByUserId(userId, profile);
     }
 
     res.send(JSON.stringify(account));
