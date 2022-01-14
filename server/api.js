@@ -204,22 +204,29 @@ function setupRouter() {
   router.post("/post", async function (req, res) {
     console.log("post", req.body);
 
+    const token = req.body.token;
     const msg = req.body.msg;
 
-    const accountResp = await fetch("https://lichess.org/api/account", {
-      headers: {
-        Authorization: `Bearer ${req.body.token}`,
-      },
-    });
+    const userId = userIdsCache[token];
 
-    const account = await accountResp.json();
+    if (!userId) {
+      console.error("fatal, user id coult not be resolved from token");
 
-    console.log("account", account);
+      return;
+    }
+
+    const profile = usersCache[userId];
+
+    if (!profile) {
+      console.error("fatal, user profile coult not be resolved from user id");
+
+      return;
+    }
 
     messages.unshift({
       msg,
       time: Date.now(),
-      account,
+      profile,
     });
 
     if (messages.length > MAX_MESSAGES) {
