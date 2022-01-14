@@ -13,6 +13,10 @@ module.exports = {
       entry: "src/main.ts",
       title: "App",
     },
+    randusers: {
+      entry: "src/randusers.ts",
+      title: "Randusers",
+    },
   },
   lintOnSave: false,
   outputDir: path.resolve(__dirname, "appdist")

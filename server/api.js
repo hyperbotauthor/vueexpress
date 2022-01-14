@@ -354,6 +354,16 @@ function setupRouter() {
       createRandomProfile(res);
     }
   });
+
+  router.post("/randusers", function (req, res) {
+    res.send(
+      JSON.stringify(
+        Array(50)
+          .fill(0)
+          .map(() => randUserName())
+      )
+    );
+  });
 }
 
 connect().then((result) => {
