@@ -40,7 +40,11 @@ const base = {
       exports,
       globals
     },
-    plugins
+    plugins,
+    onwarn(warning, warn){
+      if(warning.code === "CIRCULAR_DEPENDENCY") return
+      warn(warning)
+    }
   }
 
 // format specific output
