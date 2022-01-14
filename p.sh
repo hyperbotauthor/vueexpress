@@ -3,7 +3,7 @@ yarn prettier
 
 git add .
 git commit -m "$*"
-git push --set-upstream origin master
+git push --set-upstream origin main
 
 . archive.sh
 git add repo.tar.gz

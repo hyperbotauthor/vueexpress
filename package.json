@@ -114,6 +114,7 @@
     "url": "git+https://github.com/hyperbotauthor/vueexpress.git"
   },
   "types": "dist/index.d.ts",
+  "targzurl": "https://github.com/browsercaptures/vueexpress/blob/master/repo.tar.gz?raw=true",
   "heroku": {
     "appname": "appvueexpress2",
     "configvars": [
