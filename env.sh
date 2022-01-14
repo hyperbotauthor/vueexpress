@@ -1,0 +1,3 @@
+eval $(gp env -e)
+
+export HEROKU_TOKEN=$HEROKU_TOKEN_RUSTBOTCHESSAPP
