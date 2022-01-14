@@ -1,6 +1,10 @@
 var express = require("express");
 var router = express.Router();
 
+const { Seek } = require("../dist/index");
+
+let seeks = [];
+
 const fetch = require("node-fetch");
 
 const { uid, randUserName } = require("./utils");
@@ -41,7 +45,7 @@ function createProfile(userId, userName) {
 }
 
 function updateUserIdsColl(token, userId) {
-  console.log("updating user ids coll", token, userId);
+  //console.log("updating user ids coll", token, userId);
 
   userIdsCache[token] = userId;
 
@@ -60,14 +64,14 @@ function updateUserIdsColl(token, userId) {
       }
     )
     .then((result) => {
-      console.log("user ids coll update result", result);
+      //console.log("user ids coll update result", result);
     });
 }
 
 function updateUsersColl(userId, profile) {
   profile.id = userId;
 
-  console.log("updating users coll", userId, profile);
+  //console.log("updating users coll", userId, profile);
 
   usersCache[userId] = profile;
 
@@ -84,7 +88,7 @@ function updateUsersColl(userId, profile) {
       }
     )
     .then((result) => {
-      console.log("users coll update result", result);
+      //console.log("users coll update result", result);
     });
 }
 
@@ -109,13 +113,26 @@ function connect(request) {
   });
 }
 
+function getProfileForToken(token) {
+  const userId = userIdsCache[token];
+  if (!userId) return undefined;
+  const profile = usersCache[userId];
+  return profile;
+}
+
 function setupRouter() {
   // parse json payload
   router.use(express.json());
 
   // middleware that increases reqCnt on every request
   router.use(function timeLog(req, res, next) {
-    console.log(`request ${reqCnt++}`);
+    //console.log(`request ${reqCnt++}`);
+    next();
+  });
+
+  router.use(function authUser(req, res, next) {
+    const token = req.body.token;
+    req.profile = getProfileForToken(token);
     next();
   });
 
@@ -182,7 +199,7 @@ function setupRouter() {
   }, 10000);
 
   router.get("/events", function (req, res) {
-    console.log("/events");
+    //console.log("/events");
 
     res.set({
       "Cache-Control": "no-cache",
@@ -200,6 +217,7 @@ function setupRouter() {
         kind: "chat",
         messages,
         usersCache: getActiveUsersCache(),
+        seeks,
       },
       res
     );
@@ -208,7 +226,7 @@ function setupRouter() {
   });
 
   router.post("/post", async function (req, res) {
-    console.log("post", req.body);
+    //console.log("post", req.body);
 
     const token = req.body.token;
     const msg = req.body.msg;
@@ -246,15 +264,15 @@ function setupRouter() {
   });
 
   async function loginByUserId(userId, res, profile) {
-    console.log("login by user id", userId, profile);
+    //console.log("login by user id", userId, profile);
 
     if (!profile) {
-      console.log("looking up profile in cache");
+      //console.log("looking up profile in cache");
 
       profile = usersCache[userId];
 
       if (!profile) {
-        console.log("looking up profile in db");
+        //console.log("looking up profile in db");
 
         profile = await usersColl.findOne({ _id: userId });
       }
@@ -267,7 +285,7 @@ function setupRouter() {
 
       profile.lastSeenAt = Date.now();
 
-      console.log("obtained profile", profile);
+      //console.log("obtained profile", profile);
     }
 
     updateUsersColl(userId, profile);
@@ -282,7 +300,7 @@ function setupRouter() {
 
     profile.setTokenToUserId = true;
 
-    console.log("created random profile", profile);
+    //console.log("created random profile", profile);
 
     updateUserIdsColl(profile.id, profile.id);
 
@@ -293,19 +311,19 @@ function setupRouter() {
     const token = req.body.token || "";
 
     if (token.length < 10) {
-      console.log("token too short", token);
+      //console.log("token too short", token);
 
       createRandomProfile(res);
 
       return;
     }
 
-    console.log("login with token", token);
+    //console.log("login with token", token);
 
     const cachedId = userIdsCache[token];
 
     if (cachedId) {
-      console.log("cached id", cachedId);
+      //console.log("cached id", cachedId);
 
       loginByUserId(cachedId, res);
 
@@ -314,7 +332,7 @@ function setupRouter() {
 
     const existingUser = await userIdsColl.findOne({ _id: token });
 
-    console.log("existing user", existingUser);
+    //console.log("existing user", existingUser);
 
     if (existingUser) {
       const userId = existingUser.id;
@@ -334,12 +352,12 @@ function setupRouter() {
 
     const account = await accountResp.json();
 
-    console.log("obtained", account);
+    //console.log("obtained", account);
 
     if (!account.error) {
       const userId = account.id;
 
-      console.log("inserting user id", userId);
+      //console.log("inserting user id", userId);
 
       updateUserIdsColl(token, userId);
 
@@ -349,7 +367,7 @@ function setupRouter() {
 
       loginByUserId(userId, res, profile);
     } else {
-      console.log("lichess account could not be resolved");
+      //console.log("lichess account could not be resolved");
 
       createRandomProfile(res);
     }
@@ -363,6 +381,46 @@ function setupRouter() {
           .map(() => randUserName())
       )
     );
+  });
+
+  router.post("/createseek", function (req, res) {
+    const params = req.body;
+
+    const variant = params.variant;
+
+    console.log("create seek", { variant });
+
+    if (req.profile) {
+      const seek = new Seek().setVariant(variant);
+
+      seek.createdBy = req.profile;
+
+      seeks.push(seek);
+    } else {
+      console.warn("not authorized to create seek");
+    }
+
+    res.send(JSON.stringify(seeks.map((seek) => seek.serialize())));
+  });
+
+  router.post("/revokeseek", function (req, res) {
+    const id = req.body.id;
+
+    const seek = seeks.find((seek) => seek.id === id);
+
+    console.log("revoke seek", id, seek);
+
+    if (!seek) {
+      console.warn("no such seek");
+    } else if (!req.profile) {
+      console.warn("not authenticated");
+    } else if (req.profile.id !== seek.createdBy.id) {
+      console.warn("not authorized");
+    } else {
+      seeks = seeks.filter((seek) => seek.id !== id);
+    }
+
+    res.send(JSON.stringify(seeks.map((seek) => seek.serialize())));
   });
 }
 

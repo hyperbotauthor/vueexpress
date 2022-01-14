@@ -43,6 +43,26 @@
             >Random Usernames</a
           >
         </div>
+        <div class="seeks">
+          <button v-on:click="createseek">Create Seek</button>
+          <div class="seek" v-for="seek in seeks" :key="`Math.random()`">
+            <div class="variant">{{ seek.variant.display() }}</div>
+            <div class="iniitaltime">{{ seek.initialTime }}</div>
+            +
+            <div class="increment">{{ seek.increment }}</div>
+            <div class="rated">{{ seek.rated ? "Rated" : "Casual" }}</div>
+            <div class="rounds">{{ seek.rounds }}</div>
+            by
+            <div class="createdby">{{ seek.createdBy.username }}</div>
+            <button
+              class="revoke"
+              v-if="profile.id == seek.createdBy.id"
+              v-on:click="revokeseek(seek.id)"
+            >
+              Revoke
+            </button>
+          </div>
+        </div>
         <div class="chat">
           <input type="text" v-on:keyup="chatmsgentered" />
           <div class="message" v-for="msg in messages" :key="`Math.random()`">
@@ -61,7 +81,7 @@
 
 <script>
 import { Options, Vue } from "vue-class-component";
-import { AppComponent } from "../dist/index.js";
+import { AppComponent, Seek } from "../dist/index.js";
 
 function post(endpoint, payloadOpt) {
   const payload = payloadOpt || {};
@@ -91,20 +111,49 @@ function post(endpoint, payloadOpt) {
       messages: [],
       usersCache: {},
       profile: { username: "?" },
+      seeks: [],
     };
   },
   methods: {
+    revokeSeek(id) {
+      post("/api/revokeseek", { id }).then((json) => {
+        const seeks = json.map((seek) => new Seek().deserialize(seek));
+
+        console.log("seeks", seeks);
+
+        this.seeks = seeks;
+      });
+    },
+    revokeseek(id) {
+      console.log("revoke seek", id);
+
+      this.revokeSeek(id);
+    },
+    createSeek(params) {
+      console.log("creating seek", params);
+
+      post("/api/createseek", params).then((json) => {
+        const seeks = json.map((seek) => new Seek().deserialize(seek));
+
+        console.log("seeks", seeks);
+
+        this.seeks = seeks;
+      });
+    },
+    createseek() {
+      this.createSeek({ variant: "atomic" });
+    },
     chatmsgentered(ev) {
       if (ev.keyCode === 13) {
         const msg = ev.target.value;
-        console.log("sending", msg);
+        //console.log("sending", msg);
         ev.target.value = "";
         post("/api/post", { msg });
       }
     },
     login() {
       post("/api/login").then((profile) => {
-        console.log("login profile", profile);
+        //console.log("login profile", profile);
 
         if (profile.setTokenToUserId) {
           console.log("setting token to user id");
@@ -144,19 +193,23 @@ function post(endpoint, payloadOpt) {
         if (data.usersCache) {
           this.usersCache = data.usersCache;
         }
+
+        if (data.seeks) {
+          this.seeks = data.seeks.map((seek) => new Seek().deserialize(seek));
+        }
       }
 
       if (data.kind === "users") {
         this.usersCache = data.usersCache;
 
-        console.log(this.usersCache);
+        //console.log(this.usersCache);
       }
 
       // Display the event data in the `content` div
       this.event = data;
     };
 
-    console.log(source);
+    //console.log(source);
 
     this.login();
 
@@ -221,6 +274,11 @@ button {
   padding: 5px;
   background-color: #fdf;
 }
+.seeks {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #ffa;
+}
 .content a {
   font-size: 20px;
 }
@@ -254,5 +312,46 @@ button {
   padding: 3px;
   background-color: #ffa;
   margin: 3px;
+}
+.seek {
+  display: flex;
+  align-items: center;
+  font-family: monospace;
+  font-size: 20px;
+  background-color: #eee;
+  padding: 3px;
+  padding-left: 10px;
+  margin: 1px;
+  margin-top: 4px;
+  border: solid 1px;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 2px 2px #aaa;
+}
+.seek div {
+  padding: 3px;
+}
+.variant {
+  color: #070;
+  font-weight: bold;
+}
+.initialtime {
+  color: #007;
+}
+.increment {
+  color: #700;
+}
+.rated {
+  color: #077;
+}
+.rounds {
+  color: #707;
+}
+.createdby {
+  font-weight: bold;
+  color: #770;
+}
+.revoke {
+  background-color: #fdd;
 }
 </style>
