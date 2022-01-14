@@ -43,6 +43,8 @@ function createProfile(userId, userName) {
 function updateUserIdsColl(token, userId) {
   console.log("updating user ids coll", token, userId);
 
+  userIdsCache[token] = userId;
+
   userIdsColl
     .updateOne(
       {
@@ -63,7 +65,11 @@ function updateUserIdsColl(token, userId) {
 }
 
 function updateUsersColl(userId, profile) {
+  profile.id = userId;
+
   console.log("updating users coll", userId, profile);
+
+  usersCache[userId] = profile;
 
   usersColl
     .updateOne(
@@ -144,7 +150,7 @@ function setupRouter() {
   }
 
   function sendEvent(ev) {
-    console.log("send to all", ev);
+    //console.log("send to all", ev);
     for (let es of eventSources) {
       sendEventRes(ev, es.res);
     }
