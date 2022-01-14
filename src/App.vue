@@ -39,7 +39,9 @@
             >Board API Docs</a
           >
           )
-          <a href="/randusers" rel="noopener noreferror">Random Usernames</a>
+          <a href="/randusers.html" rel="noopener noreferror"
+            >Random Usernames</a
+          >
         </div>
         <div class="chat">
           <input type="text" v-on:keyup="chatmsgentered" />
