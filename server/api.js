@@ -343,11 +343,11 @@ function setupRouter() {
 
       updateUserIdsColl(token, userId);
 
-      const profile = createProfile(userId, accout.username);
+      const profile = createProfile(userId, account.username);
 
       updateUsersColl(userId, profile);
 
-      loginByUserId(userId, profile);
+      loginByUserId(userId, res, profile);
     } else {
       console.log("lichess account could not be resolved");
 
