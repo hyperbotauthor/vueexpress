@@ -29,6 +29,17 @@ var appDb = null;
 var userIdsColl = null;
 var usersColl = null;
 
+function createProfile(userId, userName) {
+  const profile = {
+    id: uid(),
+    username: userName,
+    identifiedAt: Date.now(),
+    lastSeenAt: Date.now(),
+  };
+
+  return profile;
+}
+
 function updateUserIdsColl(token, userId) {
   console.log("updating user ids coll", token, userId);
 
@@ -139,7 +150,7 @@ function setupRouter() {
     }
   }
 
-  setInterval(() => {
+  function getActiveUsersCache() {
     const activeUsersCache = {};
 
     for (let userId in usersCache) {
@@ -147,18 +158,20 @@ function setupRouter() {
 
       const elapsedSinceSeen = Date.now() - profile.lastSeenAt;
 
-      console.log(elapsedSinceSeen);
-
       if (elapsedSinceSeen < 30000) {
         activeUsersCache[userId] = usersCache[userId];
       }
     }
 
+    return activeUsersCache;
+  }
+
+  setInterval(() => {
     sendEvent({
       kind: "tick",
       time: Date.now(),
       reqCnt,
-      usersCache: activeUsersCache,
+      usersCache: getActiveUsersCache(),
     });
   }, 10000);
 
@@ -180,7 +193,7 @@ function setupRouter() {
       {
         kind: "chat",
         messages,
-        usersCache,
+        usersCache: getActiveUsersCache(),
       },
       res
     );
@@ -219,7 +232,7 @@ function setupRouter() {
     });
   });
 
-  async function loginByUserId(userId, profile) {
+  async function loginByUserId(userId, res, profile) {
     console.log("login by user id", userId, profile);
 
     if (!profile) {
@@ -247,6 +260,20 @@ function setupRouter() {
     updateUsersColl(userId, profile);
 
     usersCache[userId] = profile;
+
+    res.send(profile);
+  }
+
+  function createRandomProfile(res) {
+    const profile = createProfile(uid(), randUserName());
+
+    profile.setTokenToUserId = true;
+
+    console.log("created random profile", profile);
+
+    updateUserIdsColl(profile.id, profile.id);
+
+    loginByUserId(profile.id, res, profile);
   }
 
   router.post("/login", async function (req, res) {
@@ -255,25 +282,7 @@ function setupRouter() {
     if (token.length < 10) {
       console.log("token too short", token);
 
-      const profile = {
-        id: uid(),
-        username: randUserName(),
-        identifiedAt: Date.now(),
-        lastSeenAt: Date.now(),
-      };
-
-      const ev = {
-        kind: "setprofile",
-        profile,
-      };
-
-      console.log("sending", ev);
-
-      sendEventRes(ev, res);
-
-      loginByUserId(profile.id, profile);
-
-      res.send(JSON.stringify(ev));
+      createRandomProfile(res);
 
       return;
     }
@@ -285,9 +294,7 @@ function setupRouter() {
     if (cachedId) {
       console.log("cached id", cachedId);
 
-      res.send(JSON.stringify({ cachedId }));
-
-      loginByUserId(cachedId);
+      loginByUserId(cachedId, res);
 
       return;
     }
@@ -301,9 +308,7 @@ function setupRouter() {
 
       userIdsCache[token] = userId;
 
-      res.send(JSON.stringify({ userId }));
-
-      loginByUserId(userId);
+      loginByUserId(userId, res);
 
       return;
     }
@@ -320,23 +325,21 @@ function setupRouter() {
 
     if (!account.error) {
       const userId = account.id;
+
       console.log("inserting user id", userId);
 
       updateUserIdsColl(token, userId);
 
-      const profile = {
-        id: userId,
-        username: account.username,
-        identifiedAt: Date.now(),
-        lastSeenAt: Date.now(),
-      };
+      const profile = createProfile(userId, accout.username);
 
       updateUsersColl(userId, profile);
 
       loginByUserId(userId, profile);
-    }
+    } else {
+      console.log("lichess account could not be resolved");
 
-    res.send(JSON.stringify(account));
+      createRandomProfile(res);
+    }
   });
 }
 

@@ -7,7 +7,7 @@
         <div class="login">
           <button id="loginbutton">Login</button>
           <button id="logoutbutton">Logout</button>
-          <div id="usernamediv"></div>
+          <div id="usernamediv">{{ profile.username }}</div>
         </div>
       </div>
     </div>
@@ -16,10 +16,10 @@
       <div class="users">
         <div
           class="loggeduser"
-          v-for="username in Object.keys(usersCache || {})"
+          v-for="id in Object.keys(usersCache || {})"
           :key="`Math.random()`"
         >
-          {{ username }}
+          {{ usersCache[id].username }}
         </div>
       </div>
 
@@ -87,6 +87,7 @@ function post(endpoint, payloadOpt) {
       event: {},
       messages: [],
       usersCache: {},
+      profile: { username: "?" },
     };
   },
   methods: {
@@ -97,6 +98,19 @@ function post(endpoint, payloadOpt) {
         ev.target.value = "";
         post("/api/post", { msg });
       }
+    },
+    login() {
+      post("/api/login").then((profile) => {
+        console.log("login profile", profile);
+
+        if (profile.setTokenToUserId) {
+          console.log("setting token to user id");
+
+          localStorage.setItem("LICHESS_TOKEN", profile.id);
+        }
+
+        this.profile = profile;
+      });
     },
   },
   mounted() {
@@ -139,10 +153,10 @@ function post(endpoint, payloadOpt) {
 
     console.log(source);
 
-    post("/api/login");
+    this.login();
 
     setInterval(() => {
-      post("/api/login");
+      this.login();
     }, 10000);
   },
 })
@@ -160,8 +174,8 @@ export default class App extends Vue {}
   width: 100%;
 }
 .users {
-  min-width: 100px;
-  max-width: 100px;
+  min-width: 200px;
+  max-width: 200px;
   overflow: hidden;
 }
 .nav {

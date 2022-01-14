@@ -22,33 +22,6 @@ async function login() {
   await oauth.fetchAuthorizationCode();
 }
 
-async function useApi() {
-  const res = await fetch(`${lichessHost}/api/account`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("LICHESS_TOKEN")}`,
-    },
-  });
-  const username = (await res.json()).id;
-  console.log(username);
-  document.getElementById("usernamediv").innerHTML = username || "-";
-}
-
-function updateToken() {
-  const token = localStorage.getItem("LICHESS_TOKEN");
-
-  console.log("update token to", token);
-
-  //document.getElementById("LICHESS_TOKEN").value = token
-
-  const buttonElements = ["logoutbutton"].map((id) =>
-    document.getElementById(id)
-  );
-
-  buttonElements.forEach((e) =>
-    token ? e.removeAttribute("disabled") : e.setAttribute("disabled", true)
-  );
-}
-
 let retries = 10;
 
 async function init() {
@@ -66,7 +39,6 @@ async function init() {
     document.getElementById("logoutbutton").addEventListener("click", logout);
   }
 
-  updateToken();
   try {
     const hasAuthCode = await oauth.isReturningFromAuthServer();
     if (hasAuthCode) {
@@ -76,14 +48,11 @@ async function init() {
 
       localStorage.setItem("LICHESS_TOKEN", accessContext.token.value);
 
-      updateToken();
-
       document.location.href = "/";
     }
   } catch (err) {
     console.log(err);
   }
-  useApi();
 }
 
 async function logout() {
