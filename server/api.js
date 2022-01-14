@@ -3,6 +3,8 @@ var router = express.Router();
 
 const fetch = require("node-fetch");
 
+const { uid, randUserName } = require("./utils");
+
 const { MongoClient } = require("mongodb");
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -26,6 +28,48 @@ const client = new MongoClient(MONGODB_URI, {
 var appDb = null;
 var userIdsColl = null;
 var usersColl = null;
+
+function updateUserIdsColl(token, userId) {
+  console.log("updating user ids coll", token, userId);
+
+  userIdsColl
+    .updateOne(
+      {
+        _id: token,
+      },
+      {
+        $set: {
+          id: userId,
+        },
+      },
+      {
+        upsert: true,
+      }
+    )
+    .then((result) => {
+      console.log("user ids coll update result", result);
+    });
+}
+
+function updateUsersColl(userId, profile) {
+  console.log("updating users coll", userId, profile);
+
+  usersColl
+    .updateOne(
+      {
+        _id: userId,
+      },
+      {
+        $set: profile,
+      },
+      {
+        upsert: true,
+      }
+    )
+    .then((result) => {
+      console.log("users coll update result", result);
+    });
+}
 
 function connect(request) {
   return new Promise((resolve) => {
@@ -198,29 +242,41 @@ function setupRouter() {
       profile.lastSeenAt = Date.now();
 
       console.log("obtained profile", profile);
-
-      usersColl
-        .updateOne(
-          {
-            _id: userId,
-          },
-          {
-            $set: profile,
-          },
-          {
-            upsert: true,
-          }
-        )
-        .then((result) => {
-          console.log("user upsert result", result);
-        });
-
-      usersCache[userId] = profile;
     }
+
+    updateUsersColl(userId, profile);
+
+    usersCache[userId] = profile;
   }
 
   router.post("/login", async function (req, res) {
-    const token = req.body.token;
+    const token = req.body.token || "";
+
+    if (token.length < 10) {
+      console.log("token too short", token);
+
+      const profile = {
+        id: uid(),
+        username: randUserName(),
+        identifiedAt: Date.now(),
+        lastSeenAt: Date.now(),
+      };
+
+      const ev = {
+        kind: "setprofile",
+        profile,
+      };
+
+      console.log("sending", ev);
+
+      sendEventRes(ev, res);
+
+      loginByUserId(profile.id, profile);
+
+      res.send(JSON.stringify(ev));
+
+      return;
+    }
 
     console.log("login with token", token);
 
@@ -266,45 +322,16 @@ function setupRouter() {
       const userId = account.id;
       console.log("inserting user id", userId);
 
-      userIdsColl
-        .updateOne(
-          {
-            _id: token,
-          },
-          {
-            $set: {
-              id: userId,
-            },
-          },
-          {
-            upsert: true,
-          }
-        )
-        .then((result) => {
-          console.log("user id upsert result", result);
-        });
+      updateUserIdsColl(token, userId);
 
       const profile = {
+        id: userId,
         username: account.username,
         identifiedAt: Date.now(),
         lastSeenAt: Date.now(),
       };
 
-      usersColl
-        .updateOne(
-          {
-            _id: userId,
-          },
-          {
-            $set: profile,
-          },
-          {
-            upsert: true,
-          }
-        )
-        .then((result) => {
-          console.log("user upsert result", result);
-        });
+      updateUsersColl(userId, profile);
 
       loginByUserId(userId, profile);
     }
