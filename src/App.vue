@@ -111,7 +111,7 @@ function post(endpoint, payloadOpt) {
 
         this.profile = profile;
 
-        this.usersCache[this.profile.id] = this.profile;
+        this.usersCache[this.profile.id || this.profile._id] = this.profile;
       });
     },
   },
