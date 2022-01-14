@@ -400,6 +400,11 @@ function setupRouter() {
       console.warn("not authorized to create seek");
     }
 
+    sendEvent({
+      kind: "seeks",
+      seeks,
+    });
+
     res.send(JSON.stringify(seeks.map((seek) => seek.serialize())));
   });
 
@@ -418,6 +423,11 @@ function setupRouter() {
       console.warn("not authorized");
     } else {
       seeks = seeks.filter((seek) => seek.id !== id);
+
+      sendEvent({
+        kind: "seeks",
+        seeks,
+      });
     }
 
     res.send(JSON.stringify(seeks.map((seek) => seek.serialize())));

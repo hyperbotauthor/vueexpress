@@ -199,6 +199,10 @@ function post(endpoint, payloadOpt) {
         }
       }
 
+      if (data.kind === "seeks") {
+        this.seeks = data.seeks.map((seek) => new Seek().deserialize(seek));
+      }
+
       if (data.kind === "users") {
         this.usersCache = data.usersCache;
 
