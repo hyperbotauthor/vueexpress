@@ -117,7 +117,7 @@
   "types": "dist/index.d.ts",
   "targzurl": "https://github.com/browsercaptures/vueexpress/blob/main/repo.tar.gz?raw=true",
   "heroku": {
-    "appname": "appvueexpress2",
+    "appname": "appvueexpress",
     "configvars": [
       "ADMIN_PASS",
       "WELCOME_MESSAGE",
