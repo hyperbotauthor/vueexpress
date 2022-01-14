@@ -5,7 +5,7 @@
   "description": "Vue UI with Express API.",
   "scripts": {
     "heroku-postbuild": "yarn build && yarn appbuild",
-    "serve": "nodemon --exec 'vue-cli-service serve'",
+    "serve": "bash startserver.sh",
     "prodserve": "node server/server.js",
     "appbuild": "vue-cli-service build",
     "build": "rollup -c",
@@ -34,9 +34,10 @@
     "canvas": "^2.8.0",
     "core-js": "^3.6.5",
     "express": "^4.17.2",
+    "mongodb": "^4.3.0",
+    "node-fetch": "2.6.5",
     "vue": "^3.0.0",
-    "vue-class-component": "^8.0.0-0",
-    "node-fetch": "2.6.5"
+    "vue-class-component": "^8.0.0-0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
@@ -120,7 +121,8 @@
     "configvars": [
       "ADMIN_PASS",
       "WELCOME_MESSAGE",
-      "HEROKU_TOKEN"
+      "HEROKU_TOKEN",
+      "MONGODB_URI"
     ]
   }
 }
