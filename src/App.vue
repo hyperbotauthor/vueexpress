@@ -45,6 +45,24 @@
 import { Options, Vue } from "vue-class-component";
 import { AppComponent } from "../dist/index.js";
 
+function post(endpoint, payloadOpt) {
+  const payload = payloadOpt || {};
+  return new Promise((resolve) => {
+    payload.token = localStorage.getItem("LICHESS_TOKEN");
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }).then((response) =>
+      response.json().then((json) => {
+        resolve(json);
+      })
+    );
+  });
+}
+
 @Options({
   components: {
     AppComponent,
@@ -61,16 +79,7 @@ import { AppComponent } from "../dist/index.js";
         const msg = ev.target.value;
         console.log("sending", msg);
         ev.target.value = "";
-        fetch("/api/post", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            msg,
-            token: localStorage.getItem("LICHESS_TOKEN"),
-          }),
-        });
+        post("/api/post", { msg });
       }
     },
   },
@@ -101,6 +110,8 @@ import { AppComponent } from "../dist/index.js";
     };
 
     console.log(source);
+
+    post("/api/login");
   },
 })
 export default class App extends Vue {}
