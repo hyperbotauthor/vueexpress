@@ -4,14 +4,21 @@ export class Db {
   name: string;
   parentClient: Client;
 
+  config: any = {};
+
   db: any;
 
   collections: Collection[] = [];
 
-  constructor(name: string, parentClient: Client) {
+  constructor(name: string, parentClient: Client, config?: any) {
     this.name = name;
     this.parentClient = parentClient;
+    if (config) this.config = config;
     this.db = this.parentClient.client.db(name);
+  }
+
+  getSender() {
+    return this.config.sender || this.parentClient.config.sender;
   }
 
   collection(name: string, config?: any) {
@@ -47,6 +54,26 @@ export class Collection {
     if (config) this.config = config;
   }
 
+  getSender() {
+    return this.config.sender || this.parentDb.getSender();
+  }
+
+  onChange() {
+    //console.log(this.fullName(), "changed");
+    if (this.config.onChange) this.config.onChange(this);
+    if (this.config.sendOnChange) {
+      const sender = this.getSender();
+      if (sender) {
+        sender({
+          kind: "collchanged",
+          fullName: this.fullName(),
+          name: this.name,
+          docs: this.docs,
+        });
+      }
+    }
+  }
+
   setDoc(doc: any, set: any) {
     for (const key of Object.keys(set)) {
       doc[key] = set[key];
@@ -70,6 +97,7 @@ export class Collection {
     return new Promise((resolve) => {
       this.collection.deleteOne({ _id: id }).then((result: any) => {
         this.deleteById(id);
+        this.onChange();
         resolve(result);
       });
     });
@@ -93,6 +121,7 @@ export class Collection {
           //console.log(result, doc);
           if (doc) {
             this.setDoc(doc, set);
+            this.onChange();
             resolve(result);
           } else {
             this.getOneById(id).then((doc) => {
@@ -101,6 +130,7 @@ export class Collection {
               } else {
                 console.warn("missing upserted doc", id, set);
               }
+              this.onChange();
               resolve(result);
             });
           }

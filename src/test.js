@@ -3,11 +3,15 @@ const { MongoClient } = require("mongodb");
 const { Client } = require("../dist/index.js");
 
 async function testMongo() {
-  const client = new Client(MongoClient);
+  const client = new Client(MongoClient, {
+    sender: (ev) => {
+      console.log("send", ev);
+    },
+  });
 
   const db = client.db("test");
 
-  const coll = db.collection("test", { getAll: false });
+  const coll = db.collection("test", { getAll: true, sendOnChange: true });
 
   console.log(await client.connect());
   console.log(
