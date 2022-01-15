@@ -1,3 +1,5 @@
 eval $(gp env -e)
 
 export HEROKU_TOKEN=$HEROKU_TOKEN_RUSTBOTCHESSAPP
+
+export TICK_BASE=10000

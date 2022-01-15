@@ -19,7 +19,7 @@
     "generate": "",
     "prep": "yarn prettier && yarn build",
     "prepare": "",
-    "prettier": "prettier -w src",
+    "prettier": "prettier -w src server public",
     "prettiersrc": "prettier -w src",
     "reset": "git fetch origin main && git reset --hard origin/main",
     "test": "jest",

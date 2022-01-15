@@ -123,7 +123,7 @@ function post(endpoint, payloadOpt) {
   const payload = payloadOpt || {};
   return new Promise((resolve) => {
     payload.token = localStorage.getItem("LICHESS_TOKEN");
-    console.log("api post", endpoint, payload);
+    //console.log("api post", endpoint, payload);
     fetch(endpoint, {
       method: "POST",
       headers: {
@@ -163,7 +163,7 @@ function post(endpoint, payloadOpt) {
       this.revokeSeek(id);
     },
     createSeek(params) {
-      console.log("creating seek", params);
+      console.log("create seek", params);
 
       post("/api/createseek", params).then((json) => {
         console.log("create result", json);
@@ -194,7 +194,7 @@ function post(endpoint, payloadOpt) {
 
         this.usersCache[this.profile.id || this.profile._id] = this.profile;
 
-        console.log("users cache", this.usersCache);
+        //console.log("users cache", this.usersCache);
       });
     },
   },
@@ -231,6 +231,12 @@ function post(endpoint, payloadOpt) {
         }
       }
 
+      if (data.kind == "config") {
+        setInterval(() => {
+          this.login();
+        }, data.TICK_BASE);
+      }
+
       // Display the event data in the `content` div
       this.event = data;
     };
@@ -238,10 +244,6 @@ function post(endpoint, payloadOpt) {
     //console.log(source);
 
     this.login();
-
-    setInterval(() => {
-      this.login();
-    }, 60000);
   },
 })
 export default class App extends Vue {}

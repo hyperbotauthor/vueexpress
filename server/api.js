@@ -1,3 +1,5 @@
+const TICK_BASE = parseInt(process.env.TICK_BASE || "60000");
+
 var express = require("express");
 var router = express.Router();
 
@@ -18,15 +20,30 @@ const { Seek, Client } = require("../dist/index");
 
 const client = new Client(require("mongodb").MongoClient, {
   senderRes: sendEventRes,
-  sender: sendEvent
-})
+  sender: sendEvent,
+});
 
-const db = client.db("vueexpress")
+const db = client.db("vueexpress");
 
 const seeksColl = db.classCollection(Seek, "seeks", {
   getAll: true,
   sendOnChange: true,
-})
+});
+
+async function checkSeeks() {
+  for (let doc of seeksColl.collection.docs) {
+    const seekId = doc.id;
+    const userId = doc.createdBy.id;
+    const profile = usersColl.getById(userId);
+    //console.log("check seek", userId, seekId, Date.now()-profile.lastSeenAt)
+    if (!profile || Date.now() - profile.lastSeenAt > TICK_BASE * 4) {
+      console.log("removing outdated seek", userId, seekId);
+      await seeksColl.deleteOneById(seekId);
+    }
+  }
+
+  setTimeout(checkSeeks, TICK_BASE);
+}
 
 const fetch = require("node-fetch");
 
@@ -37,17 +54,16 @@ let reqCnt = 0;
 const messagesColl = db.collection("messages", {
   getAll: true,
   sendOnChange: true,
-})
+});
 
 const MAX_MESSAGES = 20;
 
-const userIdsColl = db.collection("userids", {
-})
+const userIdsColl = db.collection("userids", {});
 
 const usersColl = db.collection("users", {
-  sendFilter: doc=>((Date.now() - doc.lastSeenAt) < 30000),
+  sendFilter: (doc) => Date.now() - doc.lastSeenAt < 2 * TICK_BASE,
   sendOnChange: true,
-})
+});
 
 function createProfile(userId, userName) {
   const profile = {
@@ -62,7 +78,7 @@ function createProfile(userId, userName) {
 
 function getProfileForToken(token) {
   //console.log("get profile for token", token)
-  const doc = userIdsColl.getById(token)
+  const doc = userIdsColl.getById(token);
   //console.log("user id doc", doc)
   if (!doc) return undefined;
   const profile = usersColl.getById(doc.userId);
@@ -113,12 +129,8 @@ function setupRouter() {
   }
 
   setInterval(() => {
-    sendEvent({
-      kind: "tick",
-      time: Date.now(),
-      reqCnt,
-    });
-  }, 120000);
+    usersColl.send();
+  }, TICK_BASE * 2);
 
   router.get("/events", function (req, res) {
     //console.log("/events");
@@ -134,18 +146,28 @@ function setupRouter() {
     // Tell the client to retry every 10 seconds if connectivity is lost
     res.write("retry: 10000\n\n");
 
-    seeksColl.sendRes(res)
-    usersColl.sendRes(res)
-    messagesColl.sendRes(res)
-    
+    seeksColl.sendRes(res);
+    usersColl.sendRes(res);
+    messagesColl.sendRes(res);
+
+    sendEventRes(
+      {
+        kind: "config",
+        TICK_BASE,
+      },
+      res
+    );
+
     addEventSource(res);
   });
 
-  function checkMessages(){
+  function checkMessages() {
     if (messagesColl.docs.length > MAX_MESSAGES) {
-      messagesColl.deleteOneById(messagesColl.docs[0].id).then(result => setTimeout(checkMessages, 1000))
-    }else{
-      setTimeout(checkMessages, 1000)
+      messagesColl
+        .deleteOneById(messagesColl.docs[0].id)
+        .then((result) => setTimeout(checkMessages, 1000));
+    } else {
+      setTimeout(checkMessages, 1000);
     }
   }
 
@@ -167,7 +189,7 @@ function setupRouter() {
       msg,
       time: Date.now(),
       profile,
-    })
+    });
   });
 
   async function loginByUserId(userId, res, profile) {
@@ -187,11 +209,11 @@ function setupRouter() {
       profile.lastSeenAt = Date.now();
 
       //console.log("obtained profile", profile);
+    } else {
+      await usersColl.upsertOneById(userId, profile);
     }
 
-    await usersColl.upsertOneById(userId, profile);
-
-    res.send(JSON.stringify(profile))
+    res.send(JSON.stringify(profile));
   }
 
   async function createRandomProfile(res) {
@@ -201,8 +223,8 @@ function setupRouter() {
 
     //console.log("created random profile", profile);
 
-    await userIdsColl.upsertOneById(profile.id, {userId:profile.id})
-    
+    await userIdsColl.upsertOneById(profile.id, { userId: profile.id });
+
     await loginByUserId(profile.id, res, profile);
   }
 
@@ -246,7 +268,7 @@ function setupRouter() {
 
       //console.log("inserting user id", userId);
 
-      await userIdsColl.upsertOneById(token, {userId});
+      await userIdsColl.upsertOneById(token, { userId });
 
       const profile = createProfile(userId, account.username);
 
@@ -279,7 +301,12 @@ function setupRouter() {
     const rounds = params.rounds;
 
     if (req.profile) {
-      console.log("create seek", req.profile.username, { variant, initialTime, increment, rounds });
+      console.log("create seek", req.profile.username, {
+        variant,
+        initialTime,
+        increment,
+        rounds,
+      });
 
       const seek = new Seek().setVariant(variant);
 
@@ -294,13 +321,13 @@ function setupRouter() {
       console.warn("not authorized to create seek");
     }
 
-    res.send(JSON.stringify({ok:true}))
+    res.send(JSON.stringify({ ok: true }));
   });
 
   router.post("/revokeseek", async function (req, res) {
     const id = req.body.id;
 
-    const seek = seeksColl.getById(id)
+    const seek = seeksColl.getById(id);
 
     if (!seek) {
       console.warn("no such seek");
@@ -311,21 +338,22 @@ function setupRouter() {
     } else {
       console.log("revoke seek", req.profile.username, id);
 
-      seeks = await seeksColl.deleteOneById(id)
+      seeks = await seeksColl.deleteOneById(id);
     }
-    
-    res.send(JSON.stringify({ok:true}))
+
+    res.send(JSON.stringify({ ok: true }));
   });
 }
 
 client.connect().then(async (result) => {
-  if(false){
-    await messagesColl.drop()
-    await seeksColl.drop()
-    await userIdsColl.drop()
-    await usersColl.drop()
+  if (false) {
+    await messagesColl.drop();
+    await seeksColl.drop();
+    await userIdsColl.drop();
+    await usersColl.drop();
   }
   setupRouter();
-})
+  checkSeeks();
+});
 
 module.exports = router;
