@@ -9,6 +9,8 @@
     "prodserve": "node server/server.js",
     "appbuild": "vue-cli-service build",
     "build": "rollup -c",
+    "watchbuild": "rollup -c --watch",
+    "prettierbuild": "yarn prettiersrc && yarn build",
     "lint": "vue-cli-service lint",
     "addts": "vue add typescript",
     "clean": "",

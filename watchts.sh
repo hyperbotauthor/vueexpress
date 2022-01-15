@@ -1,3 +1,1 @@
-nodemon --watch src --ext ts,js --delay 1 --exec yarn prettiersrc
-
-rollup -c --watch
+nodemon --watch src --ext ts,js --exec yarn prettierbuild
