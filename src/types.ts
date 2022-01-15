@@ -1,3 +1,12 @@
+export interface Serializeable<T> {
+  serialize(): any;
+  deserialize(blob: any): T;
+}
+
+export interface MongoStorable {
+  id: string;
+}
+
 export const ALLOWED_VARIANTS = ["standard", "atomic", "atomic960"] as const;
 
 export type TVariant = typeof ALLOWED_VARIANTS[number];
@@ -26,7 +35,7 @@ export const VARIANT_DISPLAYS: { [variant: string]: string } = {
   atomic960: "Atomic 960",
 };
 
-export class Variant {
+export class Variant implements Serializeable<Variant> {
   variant: TVariant = "standard";
 
   constructor(variant?: TVariant) {

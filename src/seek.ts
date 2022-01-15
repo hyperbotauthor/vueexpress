@@ -1,8 +1,16 @@
 import { UUID } from "bson";
-import { Variant, TInitialTime, TIncrement, TRounds, uid } from "./index";
+import {
+  Variant,
+  TInitialTime,
+  TIncrement,
+  TRounds,
+  uid,
+  Serializeable,
+  MongoStorable,
+} from "./index";
 import { TVariant } from "./types";
 
-export class Seek {
+export class Seek implements Serializeable<Seek>, MongoStorable {
   variant: Variant = new Variant();
   initialTime: TInitialTime = 180;
   increment: TIncrement = 0;

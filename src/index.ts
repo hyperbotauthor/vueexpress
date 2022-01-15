@@ -17,6 +17,8 @@ import {
   ALLOWED_ROUNDS,
   TRounds,
   VARIANT_DISPLAYS,
+  Serializeable,
+  MongoStorable,
 } from "./types";
 
 export {
@@ -30,6 +32,8 @@ export {
   ALLOWED_ROUNDS,
   TRounds,
   VARIANT_DISPLAYS,
+  Serializeable,
+  MongoStorable,
 };
 
 import { Seek } from "./seek";
