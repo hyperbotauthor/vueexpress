@@ -65,7 +65,7 @@ function getProfileForToken(token) {
   const doc = userIdsColl.getById(token)
   //console.log("user id doc", doc)
   if (!doc) return undefined;
-  const profile = usersColl.getById(doc.id || doc._id);
+  const profile = usersColl.getById(doc.userId);
   //console.log("profile", profile)
   return profile;
 }
@@ -319,10 +319,12 @@ function setupRouter() {
 }
 
 client.connect().then(async (result) => {
-  //await messagesColl.drop()
-  //await seeksColl.drop()
-  //await userIdsColl.drop()
-  //await usersColl.drop()
+  if(false){
+    await messagesColl.drop()
+    await seeksColl.drop()
+    await userIdsColl.drop()
+    await usersColl.drop()
+  }
   setupRouter();
 })
 
