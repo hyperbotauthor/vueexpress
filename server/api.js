@@ -1,37 +1,54 @@
 var express = require("express");
 var router = express.Router();
 
-const { Seek } = require("../dist/index");
+let eventSources = [];
 
-let seeks = [];
+function sendEventRes(ev, res) {
+  res.write("data: " + JSON.stringify(ev) + "\n\n");
+}
+
+function sendEvent(ev) {
+  //console.log("send to all", ev);
+  for (let es of eventSources) {
+    sendEventRes(ev, es.res);
+  }
+}
+
+const { Seek, Client } = require("../dist/index");
+
+const client = new Client(require("mongodb").MongoClient, {
+  senderRes: sendEventRes,
+  sender: sendEvent
+})
+
+const db = client.db("vueexpress")
+
+const seeksColl = db.classCollection(Seek, "seeks", {
+  getAll: true,
+  sendOnChange: true,
+})
 
 const fetch = require("node-fetch");
 
 const { uid, randUserName } = require("./utils");
 
-const { MongoClient } = require("mongodb");
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
 let reqCnt = 0;
 
-let messages = [];
-
-let eventSources = [];
+const messagesColl = db.collection("messages", {
+  getAll: true,
+  sendOnChange: true,
+})
 
 const MAX_MESSAGES = 20;
 
-let userIdsCache = {};
-let usersCache = {};
+const userIdsColl = db.collection("userids", {
+  getAll: true,
+})
 
-const client = new MongoClient(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-var appDb = null;
-var userIdsColl = null;
-var usersColl = null;
+const usersColl = db.collection("users", {
+  sendFilter: doc=>((Date.now() - doc.lastSeenAt) < 30000),
+  sendOnChange: true,
+})
 
 function createProfile(userId, userName) {
   const profile = {
@@ -44,79 +61,13 @@ function createProfile(userId, userName) {
   return profile;
 }
 
-function updateUserIdsColl(token, userId) {
-  //console.log("updating user ids coll", token, userId);
-
-  userIdsCache[token] = userId;
-
-  userIdsColl
-    .updateOne(
-      {
-        _id: token,
-      },
-      {
-        $set: {
-          id: userId,
-        },
-      },
-      {
-        upsert: true,
-      }
-    )
-    .then((result) => {
-      //console.log("user ids coll update result", result);
-    });
-}
-
-function updateUsersColl(userId, profile) {
-  profile.id = userId;
-
-  //console.log("updating users coll", userId, profile);
-
-  usersCache[userId] = profile;
-
-  usersColl
-    .updateOne(
-      {
-        _id: userId,
-      },
-      {
-        $set: profile,
-      },
-      {
-        upsert: true,
-      }
-    )
-    .then((result) => {
-      //console.log("users coll update result", result);
-    });
-}
-
-function connect(request) {
-  return new Promise((resolve) => {
-    client.connect((err) => {
-      if (err) {
-        console.error("MongoDb connection failed", err);
-        resolve(false);
-      } else {
-        console.log("MongoDb connected!");
-        appDb = client.db("vueexpress");
-        userIdsColl = appDb.collection("userids");
-        usersColl = appDb.collection("users");
-        if (false) {
-          userIdsColl.drop();
-          usersColl.drop();
-        }
-        resolve(true);
-      }
-    });
-  });
-}
-
 function getProfileForToken(token) {
-  const userId = userIdsCache[token];
-  if (!userId) return undefined;
-  const profile = usersCache[userId];
+  console.log("get profile for token", token)
+  const doc = userIdsColl.getById(token)
+  console.log("user id doc", doc)
+  if (!doc) return undefined;
+  const profile = usersColl.getById(doc._id || doc.id);
+  console.log("profile", profile)
   return profile;
 }
 
@@ -125,7 +76,7 @@ function setupRouter() {
   router.use(express.json());
 
   // middleware that increases reqCnt on every request
-  router.use(function timeLog(req, res, next) {
+  router.use(function incReqCnt(req, res, next) {
     reqCnt++;
     next();
   });
@@ -162,41 +113,13 @@ function setupRouter() {
     });
   }
 
-  function sendEventRes(ev, res) {
-    res.write("data: " + JSON.stringify(ev) + "\n\n");
-  }
-
-  function sendEvent(ev) {
-    //console.log("send to all", ev);
-    for (let es of eventSources) {
-      sendEventRes(ev, es.res);
-    }
-  }
-
-  function getActiveUsersCache() {
-    const activeUsersCache = {};
-
-    for (let userId in usersCache) {
-      const profile = usersCache[userId];
-
-      const elapsedSinceSeen = Date.now() - profile.lastSeenAt;
-
-      if (elapsedSinceSeen < 30000) {
-        activeUsersCache[userId] = usersCache[userId];
-      }
-    }
-
-    return activeUsersCache;
-  }
-
   setInterval(() => {
     sendEvent({
       kind: "tick",
       time: Date.now(),
       reqCnt,
-      usersCache: getActiveUsersCache(),
     });
-  }, 10000);
+  }, 120000);
 
   router.get("/events", function (req, res) {
     //console.log("/events");
@@ -212,18 +135,20 @@ function setupRouter() {
     // Tell the client to retry every 10 seconds if connectivity is lost
     res.write("retry: 10000\n\n");
 
-    sendEventRes(
-      {
-        kind: "chat",
-        messages,
-        usersCache: getActiveUsersCache(),
-        seeks,
-      },
-      res
-    );
-
+    seeksColl.sendRes(res)
+    usersColl.sendRes(res)
+    messagesColl.sendRes(res)
+    
     addEventSource(res);
   });
+
+  function checkMessages(){
+    if (messagesColl.docs.length > MAX_MESSAGES) {
+      messagesColl.deleteOneById(messagesColl.docs[0].id).then(result => setTimeout(checkMessages, 1000))
+    }else{
+      setTimeout(checkMessages, 1000)
+    }
+  }
 
   router.post("/post", async function (req, res) {
     //console.log("post", req.body);
@@ -231,36 +156,19 @@ function setupRouter() {
     const token = req.body.token;
     const msg = req.body.msg;
 
-    const userId = userIdsCache[token];
-
-    if (!userId) {
-      console.error("fatal, user id coult not be resolved from token");
-
-      return;
-    }
-
-    const profile = usersCache[userId];
+    const profile = req.profile;
 
     if (!profile) {
-      console.error("fatal, user profile coult not be resolved from user id");
+      console.error("not authorized");
 
       return;
     }
 
-    messages.unshift({
+    messagesColl.upsertOneById(uid(), {
       msg,
       time: Date.now(),
       profile,
-    });
-
-    if (messages.length > MAX_MESSAGES) {
-      messages = messages.slice(0, MAX_MESSAGES);
-    }
-
-    sendEvent({
-      kind: "chat",
-      messages,
-    });
+    })
   });
 
   async function loginByUserId(userId, res, profile) {
@@ -269,16 +177,10 @@ function setupRouter() {
     if (!profile) {
       //console.log("looking up profile in cache");
 
-      profile = usersCache[userId];
+      profile = await usersColl.getByIdElse(userId);
 
       if (!profile) {
-        //console.log("looking up profile in db");
-
-        profile = await usersColl.findOne({ _id: userId });
-      }
-
-      if (!profile) {
-        console.error("fatal, could not get profile");
+        //console.error("fatal, could not get profile");
 
         return;
       }
@@ -288,23 +190,21 @@ function setupRouter() {
       //console.log("obtained profile", profile);
     }
 
-    updateUsersColl(userId, profile);
+    usersColl.upsertOneById(userId, profile);
 
-    usersCache[userId] = profile;
-
-    res.send(profile);
+    res.send(JSON.stringify(profile))
   }
 
-  function createRandomProfile(res) {
+  async function createRandomProfile(res) {
     const profile = createProfile(uid(), randUserName());
 
     profile.setTokenToUserId = true;
 
     //console.log("created random profile", profile);
 
-    updateUserIdsColl(profile.id, profile.id);
-
-    loginByUserId(profile.id, res, profile);
+    await userIdsColl.upsertOneById(profile.id, {id:profile.id})
+    
+    await loginByUserId(profile.id, res, profile);
   }
 
   router.post("/login", async function (req, res) {
@@ -320,24 +220,14 @@ function setupRouter() {
 
     //console.log("login with token", token);
 
-    const cachedId = userIdsCache[token];
-
-    if (cachedId) {
-      //console.log("cached id", cachedId);
-
-      loginByUserId(cachedId, res);
-
-      return;
-    }
-
-    const existingUser = await userIdsColl.findOne({ _id: token });
+    const existingUser = await userIdsColl.getOneById(token);
 
     //console.log("existing user", existingUser);
 
     if (existingUser) {
       const userId = existingUser.id;
 
-      userIdsCache[token] = userId;
+      await userIdsColl.upsertOneById(token, {id:userId})
 
       loginByUserId(userId, res);
 
@@ -359,11 +249,11 @@ function setupRouter() {
 
       //console.log("inserting user id", userId);
 
-      updateUserIdsColl(token, userId);
+      await userIdsColl.upsertOneById(token, {id:userId});
 
       const profile = createProfile(userId, account.username);
 
-      updateUsersColl(userId, profile);
+      await usersColl.upsertOneById(userId, profile);
 
       loginByUserId(userId, res, profile);
     } else {
@@ -383,7 +273,7 @@ function setupRouter() {
     );
   });
 
-  router.post("/createseek", function (req, res) {
+  router.post("/createseek", async function (req, res) {
     const params = req.body;
 
     const variant = params.variant;
@@ -402,23 +292,18 @@ function setupRouter() {
 
       seek.createdBy = req.profile;
 
-      seeks.push(seek);
+      await seeksColl.upsertOneById(seek.id, seek);
     } else {
       console.warn("not authorized to create seek");
     }
 
-    sendEvent({
-      kind: "seeks",
-      seeks,
-    });
-
-    res.send(JSON.stringify(seeks.map((seek) => seek.serialize())));
+    res.send(JSON.stringify({ok:true}))
   });
 
-  router.post("/revokeseek", function (req, res) {
+  router.post("/revokeseek", async function (req, res) {
     const id = req.body.id;
 
-    const seek = seeks.find((seek) => seek.id === id);
+    const seek = seeksColl.getById(id)
 
     console.log("revoke seek", id, seek);
 
@@ -429,20 +314,16 @@ function setupRouter() {
     } else if (req.profile.id !== seek.createdBy.id) {
       console.warn("not authorized");
     } else {
-      seeks = seeks.filter((seek) => seek.id !== id);
-
-      sendEvent({
-        kind: "seeks",
-        seeks,
-      });
+      seeks = await seeksColl.deleteOneById(id)
     }
-
-    res.send(JSON.stringify(seeks.map((seek) => seek.serialize())));
+    
+    res.send(JSON.stringify({ok:true}))
   });
 }
 
-connect().then((result) => {
+client.connect().then(async (result) => {
+  //await seeksColl.drop()
   setupRouter();
-});
+})
 
 module.exports = router;

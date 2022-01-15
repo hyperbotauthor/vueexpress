@@ -22,6 +22,10 @@ export class Db {
     return this.config.sender || this.parentClient.config.sender;
   }
 
+  getSenderRes() {
+    return this.config.senderRes || this.parentClient.config.senderRes;
+  }
+
   collection(name: string, config?: any) {
     const coll = new Collection(name, this, config);
     this.collections.push(coll);
@@ -29,7 +33,7 @@ export class Db {
   }
 
   onConnect() {
-    console.log("connecting db", this.name);
+    //console.log("connecting db", this.name);
 
     return new Promise((resolve) => {
       Promise.all(this.collections.map((coll) => coll.onConnect())).then(
@@ -109,6 +113,14 @@ export class ClassCollection<T extends MongoSerializeableClass<T>> {
   drop() {
     return this.collection.drop();
   }
+
+  send() {
+    this.collection.send();
+  }
+
+  sendRes(res: any) {
+    this.collection.sendRes(res);
+  }
 }
 
 export class Collection {
@@ -141,19 +153,40 @@ export class Collection {
     return this.config.sender || this.parentDb.getSender();
   }
 
+  getSenderRes() {
+    return this.config.sender || this.parentDb.getSenderRes();
+  }
+
+  sendFunc(sender: any, res?: any) {
+    if (sender) {
+      const docsToSend = this.config.sendFilter
+        ? this.docs.filter(this.config.sendFilter)
+        : this.docs;
+      sender(
+        {
+          kind: "collchanged",
+          fullName: this.fullName(),
+          name: this.name,
+          docs: docsToSend,
+        },
+        res
+      );
+    }
+  }
+
+  send() {
+    this.sendFunc(this.getSender());
+  }
+
+  sendRes(res: any) {
+    this.sendFunc(this.getSenderRes(), res);
+  }
+
   onChange() {
     //console.log(this.fullName(), "changed");
     if (this.config.onChange) this.config.onChange(this);
     if (this.config.sendOnChange) {
-      const sender = this.getSender();
-      if (sender) {
-        sender({
-          kind: "collchanged",
-          fullName: this.fullName(),
-          name: this.name,
-          docs: this.docs,
-        });
-      }
+      this.send();
     }
   }
 
@@ -165,10 +198,29 @@ export class Collection {
   }
 
   getOneById(id: string) {
+    //console.log("get one by id", this.fullName(), id)
     return new Promise((resolve) => {
       this.collection
         .findOne({ _id: id })
-        .then((result: any) => resolve(result));
+        .then((result: any) => {
+          //console.log("find one result", result)
+          if (result) {
+            const stored = this.getById(id);
+            //console.log("stored", stored)
+            if (stored) {
+              this.setDoc(stored, result);
+            } else {
+              this.docs.push(result);
+            }
+          } else {
+            this.deleteById(id);
+          }
+          resolve(result);
+        })
+        .catch((err: any) => {
+          console.error(err);
+          resolve(undefined);
+        });
     });
   }
 
@@ -187,6 +239,7 @@ export class Collection {
   }
 
   upsertOneById(id: string, set: any) {
+    set.id = id;
     //console.log("upsert one", id, set);
     return new Promise((resolve) => {
       this.collection
@@ -201,18 +254,24 @@ export class Collection {
         )
         .then((result: any) => {
           const doc = this.getById(id);
-          //console.log(result, doc);
+          console.log(
+            "upsert result",
+            this.fullName(),
+            "id",
+            id,
+            "set",
+            set,
+            "result",
+            result,
+            "doc",
+            doc
+          );
           if (doc) {
             this.setDoc(doc, set);
             this.onChange();
             resolve(result);
           } else {
-            this.getOneById(id).then((doc) => {
-              if (doc) {
-                this.docs.push(doc);
-              } else {
-                console.warn("missing upserted doc", id, set);
-              }
+            this.getOneById(id).then((result) => {
               this.onChange();
               resolve(result);
             });
@@ -226,6 +285,7 @@ export class Collection {
   }
 
   getAll(query?: any) {
+    //console.log("getting all", this.fullName(), query)
     return new Promise((resolve) => {
       this.collection.find(query || {}).toArray((err: any, result: any) => {
         if (err) {
@@ -243,7 +303,7 @@ export class Collection {
   }
 
   onConnect() {
-    console.log("connecting collection", this.fullName());
+    //console.log("connecting collection", this.fullName());
     return new Promise((resolve) => {
       if (this.config.getAll) {
         this.getAll(this.config.getAllQuery).then((result: any) => {
@@ -257,7 +317,24 @@ export class Collection {
   }
 
   getById(id: string) {
-    return this.docs.find((doc) => doc._id === id);
+    const doc = this.docs.find((doc) => (doc._id || doc.id) === id);
+
+    //console.log("get by id", this.fullName(), id, doc)
+
+    return doc;
+  }
+
+  getByIdElse(id: string) {
+    //console.log("get by id else", this.fullName(), id)
+    return new Promise((resolve) => {
+      const doc = this.getById(id);
+      if (doc) {
+        //console.log("doc in cache", doc)
+        resolve(doc);
+      } else {
+        this.getOneById(id).then((result) => resolve(result));
+      }
+    });
   }
 }
 

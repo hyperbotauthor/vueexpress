@@ -153,11 +153,7 @@ function post(endpoint, payloadOpt) {
   methods: {
     revokeSeek(id) {
       post("/api/revokeseek", { id }).then((json) => {
-        const seeks = json.map((seek) => new Seek().deserialize(seek));
-
-        console.log("seeks", seeks);
-
-        this.seeks = seeks;
+        console.log("revoke result", json);
       });
     },
     revokeseek(id) {
@@ -169,11 +165,7 @@ function post(endpoint, payloadOpt) {
       console.log("creating seek", params);
 
       post("/api/createseek", params).then((json) => {
-        const seeks = json.map((seek) => new Seek().deserialize(seek));
-
-        console.log("seeks", seeks);
-
-        this.seeks = seeks;
+        console.log("create result", json);
       });
     },
     createseek(params) {
@@ -217,32 +209,18 @@ function post(endpoint, payloadOpt) {
     source.onmessage = (ev) => {
       const data = JSON.parse(ev.data);
 
-      if (data.kind === "tick") {
-        this.usersCache = data.usersCache;
-      } else {
+      if (data.kind !== "tick") {
         console.log("event", data);
       }
 
-      if (data.kind === "chat") {
-        this.messages = data.messages;
+      if (data.kind === "collchanged") {
+        if (data.name === "messages") this.messages = data.docs;
 
-        if (data.usersCache) {
-          this.usersCache = data.usersCache;
+        if (data.name === "users") this.usersCache = data.docs;
+
+        if (data.name === "seeks") {
+          this.seeks = data.docs.map((seek) => new Seek().deserialize(seek));
         }
-
-        if (data.seeks) {
-          this.seeks = data.seeks.map((seek) => new Seek().deserialize(seek));
-        }
-      }
-
-      if (data.kind === "seeks") {
-        this.seeks = data.seeks.map((seek) => new Seek().deserialize(seek));
-      }
-
-      if (data.kind === "users") {
-        this.usersCache = data.usersCache;
-
-        //console.log(this.usersCache);
       }
 
       // Display the event data in the `content` div
@@ -255,7 +233,7 @@ function post(endpoint, payloadOpt) {
 
     setInterval(() => {
       this.login();
-    }, 10000);
+    }, 60000);
   },
 })
 export default class App extends Vue {}
