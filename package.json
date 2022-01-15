@@ -18,9 +18,10 @@
     "prep": "yarn prettier && yarn build",
     "prepare": "",
     "prettier": "prettier -w src test server public",
+    "prettiersrc": "prettier -w src && node src/test.js",
     "reset": "git fetch origin main && git reset --hard origin/main",
     "test": "jest",
-    "watch": "rollup -c --watch"
+    "watch": "bash watchts.sh"
   },
   "main": "dist/index.js",
   "module": "",

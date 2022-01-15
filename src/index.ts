@@ -36,8 +36,10 @@ import { Seek } from "./seek";
 
 export { Seek };
 
-export function uid() {
-  return (
-    "uid_" + Date.now().toString(36) + Math.random().toString(36).substring(2)
-  );
-}
+import { uid } from "./utils";
+
+export { uid };
+
+import { Client, Db, Collection } from "./mongo";
+
+export { Client, Db, Collection };
