@@ -1,4 +1,5 @@
-import { ConnectionCheckedInEvent } from "mongodb";
+import { isGloballyWhitelisted } from "@vue/shared";
+import { MongoSerializeableClass } from "./index";
 
 export class Db {
   name: string;
@@ -38,6 +39,76 @@ export class Db {
       );
     });
   }
+
+  classCollection<T extends MongoSerializeableClass<T>>(
+    type: T,
+    name: string,
+    config?: any
+  ): ClassCollection<T> {
+    const coll = this.collection(name, config);
+    const classColl = new ClassCollection<T>(type, coll, config);
+    return classColl;
+  }
+}
+
+export class ClassCollection<T extends MongoSerializeableClass<T>> {
+  collection: Collection;
+  config: any;
+  type: T;
+
+  constructor(type: T, collection: Collection, config?: any) {
+    this.type = type;
+    this.collection = collection;
+    if (config) this.config = config;
+  }
+
+  createInstance(doc: any) {
+    const instance = new this.type();
+
+    instance.deserialize(doc || {});
+
+    return instance;
+  }
+
+  getOneById(id: string): Promise<T | undefined> {
+    return new Promise((resolve) => {
+      this.collection.getOneById(id).then((doc) => {
+        if (doc) {
+          resolve(this.createInstance(doc));
+        } else {
+          resolve(undefined);
+        }
+      });
+    });
+  }
+
+  getById(id: string): T | undefined {
+    const doc = this.collection.getById(id);
+    if (!doc) return undefined;
+    return this.createInstance(doc);
+  }
+
+  upsertOneById(id: string, instance: T) {
+    instance.id = id;
+    const doc = instance.serialize();
+    return this.collection.upsertOneById(id, doc);
+  }
+
+  deleteOneById(id: string) {
+    return this.collection.deleteOneById(id);
+  }
+
+  getAll(query?: any) {
+    return new Promise((resolve) => {
+      this.collection.getAll(query).then((all: any) => {
+        resolve(all.map((doc: any) => this.createInstance(doc)));
+      });
+    });
+  }
+
+  drop() {
+    return this.collection.drop();
+  }
 }
 
 export class Collection {
@@ -52,6 +123,18 @@ export class Collection {
     this.parentDb = parentDb;
     this.collection = parentDb.db.collection(name);
     if (config) this.config = config;
+  }
+
+  drop() {
+    return new Promise((resolve) => {
+      this.collection
+        .drop()
+        .then((result: any) => {
+          console.log("dropped", this.fullName(), result);
+          resolve(result);
+        })
+        .catch((err: any) => resolve({ error: err }));
+    });
   }
 
   getSender() {

@@ -19,6 +19,8 @@ import {
   VARIANT_DISPLAYS,
   Serializeable,
   MongoStorable,
+  IsClass,
+  MongoSerializeableClass,
 } from "./types";
 
 export {
@@ -34,6 +36,8 @@ export {
   VARIANT_DISPLAYS,
   Serializeable,
   MongoStorable,
+  IsClass,
+  MongoSerializeableClass,
 };
 
 import { Seek } from "./seek";

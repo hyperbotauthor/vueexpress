@@ -10,7 +10,7 @@
     "appbuild": "vue-cli-service build",
     "build": "rollup -c",
     "watchbuild": "rollup -c --watch",
-    "prettierbuild": "rm dist/index.js ; yarn prettiersrc && yarn build && node src/test.js",
+    "testbuild": "rm dist/index.js ; yarn build && node src/test.js",
     "lint": "vue-cli-service lint",
     "addts": "vue add typescript",
     "clean": "",

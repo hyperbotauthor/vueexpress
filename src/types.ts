@@ -7,6 +7,14 @@ export interface MongoStorable {
   id: string;
 }
 
+export interface IsClass<T> {
+  new (): T;
+}
+
+export type MongoSerializeableClass<T> = IsClass<T> &
+  Serializeable<T> &
+  MongoStorable;
+
 export const ALLOWED_VARIANTS = ["standard", "atomic", "atomic960"] as const;
 
 export type TVariant = typeof ALLOWED_VARIANTS[number];
@@ -53,6 +61,8 @@ export class Variant implements Serializeable<Variant> {
   }
 
   deserialize(blob: any) {
+    if (!blob) return this;
+
     this.variant = blob.variant;
 
     return this;

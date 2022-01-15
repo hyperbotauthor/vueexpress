@@ -1,6 +1,6 @@
 const { MongoClient } = require("mongodb");
 
-const { Client } = require("../dist/index.js");
+const { Client, Seek } = require("../dist/index.js");
 
 async function testMongo() {
   const client = new Client(MongoClient, {
@@ -11,16 +11,16 @@ async function testMongo() {
 
   const db = client.db("test");
 
-  const coll = db.collection("test", { getAll: true, sendOnChange: true });
+  const coll = db.classCollection(Seek, "test", {
+    getAll: true,
+    sendOnChange: true,
+  });
 
   console.log(await client.connect());
-  console.log(
-    await coll.upsertOneById("testupsert", { content: "testupsert" }),
-    coll.docs
-  );
+  console.log(await coll.drop());
+  console.log(await coll.upsertOneById("testupsert", new Seek()));
   console.log(await coll.getAll());
-  console.log(await coll.deleteOneById("testupsert"));
-  console.log(await coll.getAll());
+  process.exit();
 }
 
 testMongo();

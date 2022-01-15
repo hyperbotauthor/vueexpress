@@ -37,6 +37,8 @@ export class Seek implements Serializeable<Seek>, MongoStorable {
   }
 
   deserialize(blob: any) {
+    if (!blob) return this;
+
     this.variant = new Variant().deserialize(blob.variant);
     this.initialTime = blob.initialTime;
     this.increment = blob.increment;
