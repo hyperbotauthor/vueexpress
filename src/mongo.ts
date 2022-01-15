@@ -62,6 +62,19 @@ export class Collection {
     });
   }
 
+  deleteById(id: string) {
+    this.docs = this.docs.filter((doc) => doc._id !== id);
+  }
+
+  deleteOneById(id: string) {
+    return new Promise((resolve) => {
+      this.collection.deleteOne({ _id: id }).then((result: any) => {
+        this.deleteById(id);
+        resolve(result);
+      });
+    });
+  }
+
   upsertOneById(id: string, set: any) {
     //console.log("upsert one", id, set);
     return new Promise((resolve) => {
