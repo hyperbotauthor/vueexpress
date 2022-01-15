@@ -42,7 +42,6 @@ const messagesColl = db.collection("messages", {
 const MAX_MESSAGES = 20;
 
 const userIdsColl = db.collection("userids", {
-  getAll: true,
 })
 
 const usersColl = db.collection("users", {
@@ -62,12 +61,12 @@ function createProfile(userId, userName) {
 }
 
 function getProfileForToken(token) {
-  console.log("get profile for token", token)
+  //console.log("get profile for token", token)
   const doc = userIdsColl.getById(token)
-  console.log("user id doc", doc)
+  //console.log("user id doc", doc)
   if (!doc) return undefined;
-  const profile = usersColl.getById(doc._id || doc.id);
-  console.log("profile", profile)
+  const profile = usersColl.getById(doc.id || doc._id);
+  //console.log("profile", profile)
   return profile;
 }
 
@@ -89,7 +88,7 @@ function setupRouter() {
 
   // define the reqcnt api route
   router.post("/reqcnt", function (req, res) {
-    console.info("reqcnt", req.body);
+    //console.info("reqcnt", req.body);
     res.send(
       JSON.stringify({
         reqCnt,
@@ -180,7 +179,7 @@ function setupRouter() {
       profile = await usersColl.getByIdElse(userId);
 
       if (!profile) {
-        //console.error("fatal, could not get profile");
+        console.error("fatal, could not get profile");
 
         return;
       }
@@ -190,7 +189,7 @@ function setupRouter() {
       //console.log("obtained profile", profile);
     }
 
-    usersColl.upsertOneById(userId, profile);
+    await usersColl.upsertOneById(userId, profile);
 
     res.send(JSON.stringify(profile))
   }
@@ -202,7 +201,7 @@ function setupRouter() {
 
     //console.log("created random profile", profile);
 
-    await userIdsColl.upsertOneById(profile.id, {id:profile.id})
+    await userIdsColl.upsertOneById(profile.id, {userId:profile.id})
     
     await loginByUserId(profile.id, res, profile);
   }
@@ -225,9 +224,7 @@ function setupRouter() {
     //console.log("existing user", existingUser);
 
     if (existingUser) {
-      const userId = existingUser.id;
-
-      await userIdsColl.upsertOneById(token, {id:userId})
+      const userId = existingUser.userId;
 
       loginByUserId(userId, res);
 
@@ -249,7 +246,7 @@ function setupRouter() {
 
       //console.log("inserting user id", userId);
 
-      await userIdsColl.upsertOneById(token, {id:userId});
+      await userIdsColl.upsertOneById(token, {userId});
 
       const profile = createProfile(userId, account.username);
 
@@ -281,9 +278,9 @@ function setupRouter() {
     const increment = params.increment;
     const rounds = params.rounds;
 
-    console.log("create seek", { variant, initialTime, increment, rounds });
-
     if (req.profile) {
+      console.log("create seek", req.profile.username, { variant, initialTime, increment, rounds });
+
       const seek = new Seek().setVariant(variant);
 
       if (initialTime !== undefined) seek.initialTime = initialTime;
@@ -305,8 +302,6 @@ function setupRouter() {
 
     const seek = seeksColl.getById(id)
 
-    console.log("revoke seek", id, seek);
-
     if (!seek) {
       console.warn("no such seek");
     } else if (!req.profile) {
@@ -314,6 +309,8 @@ function setupRouter() {
     } else if (req.profile.id !== seek.createdBy.id) {
       console.warn("not authorized");
     } else {
+      console.log("revoke seek", req.profile.username, id);
+
       seeks = await seeksColl.deleteOneById(id)
     }
     
@@ -322,7 +319,10 @@ function setupRouter() {
 }
 
 client.connect().then(async (result) => {
+  //await messagesColl.drop()
   //await seeksColl.drop()
+  //await userIdsColl.drop()
+  //await usersColl.drop()
   setupRouter();
 })
 

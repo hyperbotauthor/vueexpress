@@ -123,6 +123,7 @@ function post(endpoint, payloadOpt) {
   const payload = payloadOpt || {};
   return new Promise((resolve) => {
     payload.token = localStorage.getItem("LICHESS_TOKEN");
+    console.log("api post", endpoint, payload);
     fetch(endpoint, {
       method: "POST",
       headers: {
@@ -192,6 +193,8 @@ function post(endpoint, payloadOpt) {
         this.profile = profile;
 
         this.usersCache[this.profile.id || this.profile._id] = this.profile;
+
+        console.log("users cache", this.usersCache);
       });
     },
   },
@@ -216,7 +219,12 @@ function post(endpoint, payloadOpt) {
       if (data.kind === "collchanged") {
         if (data.name === "messages") this.messages = data.docs;
 
-        if (data.name === "users") this.usersCache = data.docs;
+        if (data.name === "users") {
+          this.usersCache = {};
+          data.docs.forEach((doc) => {
+            this.usersCache[doc.id || doc._id] = doc;
+          });
+        }
 
         if (data.name === "seeks") {
           this.seeks = data.docs.map((seek) => new Seek().deserialize(seek));

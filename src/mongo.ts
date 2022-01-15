@@ -254,7 +254,7 @@ export class Collection {
         )
         .then((result: any) => {
           const doc = this.getById(id);
-          console.log(
+          /*console.log(
             "upsert result",
             this.fullName(),
             "id",
@@ -265,7 +265,7 @@ export class Collection {
             result,
             "doc",
             doc
-          );
+          );*/
           if (doc) {
             this.setDoc(doc, set);
             this.onChange();
