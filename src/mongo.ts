@@ -2,26 +2,69 @@ export class Db {
   name: string;
   parentClient: Client;
 
+  db: any;
+
   collections: Collection[] = [];
 
   constructor(name: string, parentClient: Client) {
     this.name = name;
     this.parentClient = parentClient;
+    this.db = this.parentClient.client.db(name);
   }
 
   collection(name: string) {
     const coll = new Collection(name, this);
     this.collections.push(coll);
+    return coll;
   }
 }
 
 export class Collection {
   name: string;
   parentDb: Db;
+  collection: any;
 
   constructor(name: string, parentDb: Db) {
     this.name = name;
     this.parentDb = parentDb;
+    this.collection = parentDb.db.collection(name);
+  }
+
+  upsertOne(query: any, set: any) {
+    //console.log("upsert one", query, set);
+    return new Promise((resolve) => {
+      this.collection
+        .updateOne(
+          query,
+          {
+            $set: set,
+          },
+          {
+            upsert: true,
+          }
+        )
+        .then((result: any) => {
+          //console.log(result);
+          resolve(result);
+        })
+        .catch((err: any) => {
+          console.error(err);
+          resolve({ error: err });
+        });
+    });
+  }
+
+  getAll(query?: any) {
+    return new Promise((resolve) => {
+      this.collection.find(query || {}).toArray((err: any, result: any) => {
+        if (err) {
+          console.error("getall error", query, err);
+          resolve([]);
+        }
+
+        resolve(result);
+      });
+    });
   }
 }
 
