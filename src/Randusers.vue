@@ -2,6 +2,11 @@
   <div style="text-align: center">
     Randusers |
     <button v-on:click="gennew">Generate new</button> |
+    <select ref="limit">
+      <option value="0">Limit length to</option>
+      <option v-for="i in limits" :key="i" :value="i">{{ i }}</option>
+    </select>
+    |
     <a href="/">Home</a>
     <hr />
     <div class="name" v-for="name in randusers" :key="name">
@@ -35,11 +40,16 @@ function post(endpoint, payloadOpt) {
   data() {
     return {
       randusers: [],
+      limits: Array(26)
+        .fill(0)
+        .map((_, i) => i + 15),
     };
   },
   methods: {
     gennew() {
-      post("/api/randusers").then((randusers) => (this.randusers = randusers));
+      post("/api/randusers", { limit: parseInt(this.$refs.limit.value) }).then(
+        (randusers) => (this.randusers = randusers)
+      );
     },
   },
   mounted() {

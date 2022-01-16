@@ -28,16 +28,25 @@ function chooseRandomWord(list, capitalize) {
 
 const wordListNames = ["adverbs", "adjectives", "nouns"];
 
-function randUserName() {
+function randUserNameFunc(limit) {
   const buckets = wordListNames.map((name) => readWords(name));
 
   const words = buckets.map((bucket) => chooseRandomWord(bucket, true));
 
   const num = Math.floor(Math.random() * 1000);
 
-  const userName = `${words.join("")}${num}`;
+  const userName = `${words.join("")}${limit > 20 ? num : ""}`;
 
   return userName;
+}
+
+function randUserName(limit) {
+  do {
+    const userName = randUserNameFunc(limit || 100);
+    //console.log(userName)
+    if (!limit) return userName;
+    if (userName.length <= limit) return userName;
+  } while (true);
 }
 
 function uid() {

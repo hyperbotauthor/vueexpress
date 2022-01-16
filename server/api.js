@@ -283,11 +283,13 @@ function setupRouter() {
   });
 
   router.post("/randusers", function (req, res) {
+    const limit = req.body.limit;
+    //console.log("limit", limit)
     res.send(
       JSON.stringify(
         Array(50)
           .fill(0)
-          .map(() => randUserName())
+          .map(() => randUserName(limit))
       )
     );
   });
