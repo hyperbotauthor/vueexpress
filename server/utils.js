@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 function readWords(name) {
-  console.log(__dirname);
+  //console.log(__dirname);
   const raw = fs
     .readFileSync(path.join(__dirname, "wordlists", `${name}.txt`))
     .toString()
