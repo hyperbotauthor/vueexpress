@@ -108,7 +108,11 @@
         </div>
         <div class="chat">
           <input type="text" v-on:keyup="chatmsgentered" />
-          <div class="message" v-for="msg in messages" :key="`Math.random()`">
+          <div
+            class="message"
+            v-for="msg in messages.slice().reverse()"
+            :key="`Math.random()`"
+          >
             <div class="poster">
               {{ msg.createdBy.username || "@nonymous" }}
             </div>
