@@ -1,4 +1,6 @@
-const TICK_BASE = parseInt(process.env.TICK_BASE || "60000");
+const { uid, randUserName, envIntElse } = require("./utils");
+
+const TICK_BASE = envIntElse(process.env.TICK_BASE, 60000);
 
 var express = require("express");
 var router = express.Router();
@@ -46,8 +48,6 @@ async function checkSeeks() {
 }
 
 const fetch = require("node-fetch");
-
-const { uid, randUserName } = require("./utils");
 
 let reqCnt = 0;
 

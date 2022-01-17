@@ -55,7 +55,31 @@ function uid() {
   );
 }
 
+function envStrElse(key, def) {
+  const env = process.env[key];
+
+  if (env === undefined) {
+    return def;
+  }
+
+  return env;
+}
+
+function envIntElse(key, def) {
+  const defStr = `${def}`;
+
+  const parsed = parseInt(envStrElse(key, defStr));
+
+  if (isNaN(parsed)) {
+    return def;
+  }
+
+  return parsed;
+}
+
 module.exports = {
   randUserName,
   uid,
+  envStrElse,
+  envIntElse,
 };
