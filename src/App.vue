@@ -26,6 +26,13 @@
       <div class="main">
         <div class="content">
           <a
+            href="https://github.com/browsercaptures/vueexpress"
+            rel="noopener noreferror"
+            target="_blank"
+            >Source Code</a
+          >
+          |
+          <a
             href="/api/board?fen=&moves=&arrows=&circles=&size=&player=&variant=&flip="
             rel="noopener noreferror"
             target="_blank"
@@ -38,7 +45,7 @@
             target="_blank"
             >Board API Docs</a
           >
-          )
+          ) |
           <a href="/randusers.html" rel="noopener noreferror"
             >Random Usernames</a
           >
