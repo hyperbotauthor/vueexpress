@@ -1,5 +1,6 @@
-import { isGloballyWhitelisted } from "@vue/shared";
-import { MongoSerializeableClass } from "./index";
+import { MongoSerializeableClass, fileLogger } from "./index";
+
+const flog = new fileLogger("mongots.log");
 
 export class Db {
   name: string;
@@ -66,6 +67,10 @@ export class ClassCollection<T extends MongoSerializeableClass<T>> {
     if (config) this.config = config;
   }
 
+  get docs() {
+    return this.collection.docs;
+  }
+
   createInstance(doc: any) {
     const instance = new this.type();
 
@@ -102,9 +107,15 @@ export class ClassCollection<T extends MongoSerializeableClass<T>> {
     return this.collection.deleteOneById(id);
   }
 
+  fullName() {
+    return this.collection.fullName();
+  }
+
   getAll(query?: any) {
+    flog.log("classcoll getall", this.fullName());
     return new Promise((resolve) => {
       this.collection.getAll(query).then((all: any) => {
+        flog.log("got", this.fullName(), all);
         resolve(all.map((doc: any) => this.createInstance(doc)));
       });
     });
@@ -198,15 +209,15 @@ export class Collection {
   }
 
   getOneById(id: string) {
-    //console.log("get one by id", this.fullName(), id)
+    flog.log("get one by id", this.fullName(), id);
     return new Promise((resolve) => {
       this.collection
         .findOne({ _id: id })
         .then((result: any) => {
-          //console.log("find one result", result)
+          flog.log("find one result", result);
           if (result) {
             const stored = this.getById(id);
-            //console.log("stored", stored)
+            flog.log("stored", stored);
             if (stored) {
               this.setDoc(stored, result);
             } else {
@@ -240,7 +251,7 @@ export class Collection {
 
   upsertOneById(id: string, set: any) {
     set.id = id;
-    //console.log("upsert one", id, set);
+    flog.log("upsert one", id, set);
     return new Promise((resolve) => {
       this.collection
         .updateOne(
@@ -254,7 +265,7 @@ export class Collection {
         )
         .then((result: any) => {
           const doc = this.getById(id);
-          /*console.log(
+          flog.log(
             "upsert result",
             this.fullName(),
             "id",
@@ -265,7 +276,7 @@ export class Collection {
             result,
             "doc",
             doc
-          );*/
+          );
           if (doc) {
             this.setDoc(doc, set);
             this.onChange();
@@ -285,9 +296,10 @@ export class Collection {
   }
 
   getAll(query?: any) {
-    //console.log("getting all", this.fullName(), query)
+    flog.log("coll getall", this.fullName(), query);
     return new Promise((resolve) => {
       this.collection.find(query || {}).toArray((err: any, result: any) => {
+        flog.log("got", this.fullName(), "result", result, "err", err);
         if (err) {
           console.error("getall error", query, err);
           resolve([]);

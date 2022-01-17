@@ -1,6 +1,18 @@
-const { uid, randUserName, envIntElse } = require("./utils");
+const {
+  setNode,
+  fileLogger,
+  Seek,
+  Client,
+  randUserName,
+  envIntElse,
+} = require("../dist/index");
 
-const TICK_BASE = envIntElse(process.env.TICK_BASE, 60000);
+setNode(require("fs"), require("path"), __dirname, process.env);
+
+const flog = new fileLogger("api.log");
+
+const TICK_BASE = envIntElse("TICK_BASE", 60000);
+const MAX_SEEKS = envIntElse("MAX_SEEKS", 2);
 
 var express = require("express");
 var router = express.Router();
@@ -17,8 +29,6 @@ function sendEvent(ev) {
     sendEventRes(ev, es.res);
   }
 }
-
-const { Seek, Client } = require("../dist/index");
 
 const client = new Client(require("mongodb").MongoClient, {
   senderRes: sendEventRes,
@@ -37,9 +47,10 @@ async function checkSeeks() {
     const seekId = doc.id;
     const userId = doc.createdBy.id;
     const profile = usersColl.getById(userId);
-    //console.log("check seek", userId, seekId, Date.now()-profile.lastSeenAt)
-    if (!profile || Date.now() - profile.lastSeenAt > TICK_BASE * 4) {
-      console.log("removing outdated seek", userId, seekId);
+    const lastSeenAt = profile ? profile.lastSeenAt : 0;
+    flog.log("check seek", userId, seekId, Date.now() - lastSeenAt);
+    if (!profile || Date.now() - lastSeenAt > TICK_BASE * 4) {
+      flog.log("removing outdated seek", userId, seekId);
       await seeksColl.deleteOneById(seekId);
     }
   }
@@ -295,6 +306,8 @@ function setupRouter() {
   });
 
   router.post("/createseek", async function (req, res) {
+    const profile = req.profile;
+
     const params = req.body;
 
     const variant = params.variant;
@@ -302,13 +315,28 @@ function setupRouter() {
     const increment = params.increment;
     const rounds = params.rounds;
 
-    if (req.profile) {
+    if (profile) {
       console.log("create seek", req.profile.username, {
         variant,
         initialTime,
         increment,
         rounds,
       });
+
+      const seeksByUser = seeksColl.docs.filter(
+        (seek) => seek.createdBy.userId === profile.userId
+      );
+
+      if (seeksByUser.length >= MAX_SEEKS) {
+        res.send(
+          JSON.stringify({
+            ok: false,
+            error: `Maximum Allowed Seeks ${MAX_SEEKS}`,
+          })
+        );
+
+        return;
+      }
 
       const seek = new Seek().setVariant(variant);
 
@@ -319,11 +347,15 @@ function setupRouter() {
       seek.createdBy = req.profile;
 
       await seeksColl.upsertOneById(seek.id, seek);
+
+      //console.log(await seeksColl.getAll())
+
+      res.send(JSON.stringify({ ok: true, seekId: seek.id }));
     } else {
       console.warn("not authorized to create seek");
-    }
 
-    res.send(JSON.stringify({ ok: true }));
+      res.send(JSON.stringify({ ok: false, error: `Not Authorized` }));
+    }
   });
 
   router.post("/revokeseek", async function (req, res) {
@@ -347,6 +379,8 @@ function setupRouter() {
   });
 }
 
+flog.log("connecting");
+
 client.connect().then(async (result) => {
   if (false) {
     await messagesColl.drop();
@@ -354,8 +388,14 @@ client.connect().then(async (result) => {
     await userIdsColl.drop();
     await usersColl.drop();
   }
+
+  flog.log("setting up router");
+
   setupRouter();
-  checkSeeks();
+
+  flog.log("setting up seeks check");
+
+  setTimeout(checkSeeks, TICK_BASE * 2);
 });
 
 module.exports = router;

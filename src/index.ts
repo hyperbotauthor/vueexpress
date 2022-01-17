@@ -44,9 +44,29 @@ import { Seek } from "./seek";
 
 export { Seek };
 
-import { uid } from "./utils";
+import {
+  setNode,
+  readWords,
+  chooseRandomWord,
+  randUserNameFunc,
+  randUserName,
+  envStrElse,
+  envIntElse,
+  uid,
+  fileLogger,
+} from "./utils";
 
-export { uid };
+export {
+  setNode,
+  readWords,
+  chooseRandomWord,
+  randUserNameFunc,
+  randUserName,
+  envStrElse,
+  envIntElse,
+  uid,
+  fileLogger,
+};
 
 import { Client, Db, Collection } from "./mongo";
 

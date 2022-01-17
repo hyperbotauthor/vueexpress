@@ -167,6 +167,10 @@ function post(endpoint, payloadOpt) {
 
       post("/api/createseek", params).then((json) => {
         console.log("create result", json);
+
+        if (json.error) {
+          window.alert(json.error);
+        }
       });
     },
     createseek(params) {
