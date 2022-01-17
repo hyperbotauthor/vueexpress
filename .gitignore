@@ -5,6 +5,8 @@ node_modules
 
 /temp/*.png
 
+*.log
+
 # local env files
 .env.local
 .env.*.local
