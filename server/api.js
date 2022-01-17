@@ -6,6 +6,8 @@ const {
   randUserName,
   envIntElse,
   uid,
+  PruneCollConfig,
+  WEEK,
 } = require("../dist/index");
 
 setNode(require("fs"), require("path"), __dirname, process.env);
@@ -14,6 +16,7 @@ const flog = new fileLogger("api.log");
 
 const TICK_BASE = envIntElse("TICK_BASE", 60000);
 const MAX_SEEKS = envIntElse("MAX_SEEKS", 2);
+const CHAT_TIMEOUT = envIntElse("CHAT_TIMEOUT", WEEK);
 
 var express = require("express");
 var router = express.Router();
@@ -57,6 +60,20 @@ async function checkSeeks() {
   }
 
   setTimeout(checkSeeks, TICK_BASE);
+}
+
+async function checkMessages() {
+  const delOldest = await messagesColl.deleteOldestExpired(
+    new PruneCollConfig({ timeout: CHAT_TIMEOUT })
+  );
+
+  if (delOldest) {
+    flog.log("deleted chat message", delOldest.deletedDoc);
+
+    checkMessages();
+  } else {
+    setTimeout(checkMessages, TICK_BASE);
+  }
 }
 
 const fetch = require("node-fetch");
@@ -199,7 +216,7 @@ function setupRouter() {
 
     messagesColl.upsertOneById(uid(), {
       msg,
-      time: Date.now(),
+      createdAt: Date.now(),
       profile,
     });
   });
@@ -394,9 +411,11 @@ client.connect().then(async (result) => {
 
   setupRouter();
 
-  flog.log("setting up seeks check");
+  flog.log("setting up checks");
 
   setTimeout(checkSeeks, TICK_BASE * 4);
+
+  checkMessages();
 });
 
 module.exports = router;

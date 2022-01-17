@@ -1,6 +1,19 @@
-import { MongoSerializeableClass, fileLogger } from "./index";
+import { MongoSerializeableClass, fileLogger, DAY } from "./index";
 
 const flog = new fileLogger("mongots.log");
+
+export class PruneCollConfig {
+  createdAtKey: string = "createdAt";
+  now: number = Date.now();
+  timeout: number = DAY;
+
+  constructor(pcc?: PruneCollConfig) {
+    if (!pcc) return;
+    if (pcc.createdAtKey) this.createdAtKey = pcc.createdAtKey;
+    if (pcc.now) this.now = pcc.now;
+    if (pcc.timeout) this.timeout = pcc.timeout;
+  }
+}
 
 export class Db {
   name: string;
@@ -112,10 +125,10 @@ export class ClassCollection<T extends MongoSerializeableClass<T>> {
   }
 
   getAll(query?: any) {
-    flog.log("classcoll getall", this.fullName());
+    //flog.log("classcoll getall", this.fullName());
     return new Promise((resolve) => {
       this.collection.getAll(query).then((all: any) => {
-        flog.log("got", this.fullName(), all);
+        //flog.log("got", this.fullName(), all);
         resolve(all.map((doc: any) => this.createInstance(doc)));
       });
     });
@@ -146,6 +159,53 @@ export class Collection {
     this.parentDb = parentDb;
     this.collection = parentDb.db.collection(name);
     if (config) this.config = config;
+  }
+
+  getOldest(pccOpt?: PruneCollConfig) {
+    const pcc = new PruneCollConfig(pccOpt);
+
+    const oldest = this.docs.reduce((acc, curr) => {
+      if (!acc) return curr;
+
+      const accCreatedAt = acc[pcc.createdAtKey];
+      const currCreatedAt = curr[pcc.createdAtKey];
+
+      return currCreatedAt < accCreatedAt ? curr : acc;
+    }, undefined);
+
+    return oldest;
+  }
+
+  getOldestExpired(pccOpt?: PruneCollConfig) {
+    const pcc = new PruneCollConfig(pccOpt);
+
+    const oldest = this.getOldest(pcc);
+
+    if (!oldest) return undefined;
+
+    if (pcc.now - oldest[pcc.createdAtKey] > pcc.timeout) {
+      return oldest;
+    }
+
+    return undefined;
+  }
+
+  deleteOldestExpired(pcc?: PruneCollConfig) {
+    return new Promise((resolve) => {
+      const oldestExpired = this.getOldestExpired(pcc);
+
+      if (!oldestExpired) {
+        resolve(undefined);
+        return;
+      }
+
+      this.deleteOneById(oldestExpired.id).then((result) => {
+        resolve({
+          result,
+          deletedDoc: oldestExpired,
+        });
+      });
+    });
   }
 
   drop() {
@@ -209,15 +269,15 @@ export class Collection {
   }
 
   getOneById(id: string) {
-    flog.log("get one by id", this.fullName(), id);
+    //flog.log("get one by id", this.fullName(), id);
     return new Promise((resolve) => {
       this.collection
         .findOne({ _id: id })
         .then((result: any) => {
-          flog.log("find one result", result);
+          //flog.log("find one result", result);
           if (result) {
             const stored = this.getById(id);
-            flog.log("stored", stored);
+            //flog.log("stored", stored);
             if (stored) {
               this.setDoc(stored, result);
             } else {
@@ -251,7 +311,7 @@ export class Collection {
 
   upsertOneById(id: string, set: any) {
     set.id = id;
-    flog.log("upsert one", id, set);
+    //flog.log("upsert one", id, set);
     return new Promise((resolve) => {
       this.collection
         .updateOne(
@@ -296,10 +356,10 @@ export class Collection {
   }
 
   getAll(query?: any) {
-    flog.log("coll getall", this.fullName(), query);
+    //flog.log("coll getall", this.fullName(), query);
     return new Promise((resolve) => {
       this.collection.find(query || {}).toArray((err: any, result: any) => {
-        flog.log("got", this.fullName(), "result", result, "err", err);
+        //flog.log("got", this.fullName(), "result", result, "err", err);
         if (err) {
           console.error("getall error", query, err);
           resolve([]);

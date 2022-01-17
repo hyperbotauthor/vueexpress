@@ -54,6 +54,13 @@ import {
   envIntElse,
   uid,
   fileLogger,
+  SECOND,
+  MINUTE,
+  HOUR,
+  DAY,
+  WEEK,
+  MONTH,
+  YEAR,
 } from "./utils";
 
 export {
@@ -66,8 +73,15 @@ export {
   envIntElse,
   uid,
   fileLogger,
+  SECOND,
+  MINUTE,
+  HOUR,
+  DAY,
+  WEEK,
+  MONTH,
+  YEAR,
 };
 
-import { Client, Db, Collection } from "./mongo";
+import { Client, Db, Collection, PruneCollConfig } from "./mongo";
 
-export { Client, Db, Collection };
+export { Client, Db, Collection, PruneCollConfig };

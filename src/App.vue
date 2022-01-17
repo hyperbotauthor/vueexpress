@@ -103,7 +103,9 @@
           <input type="text" v-on:keyup="chatmsgentered" />
           <div class="message" v-for="msg in messages" :key="`Math.random()`">
             <div class="poster">{{ msg.profile.username || "@nonymous" }}</div>
-            <div class="time">{{ new Date(msg.time).toLocaleString() }}</div>
+            <div class="time">
+              {{ new Date(msg.createdAt).toLocaleString() }}
+            </div>
             <div class="msg">{{ msg.msg }}</div>
           </div>
         </div>
