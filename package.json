@@ -8,6 +8,7 @@
     "serve": "bash startserver.sh",
     "prodserve": "node server/server.js",
     "appbuild": "vue-cli-service build",
+    "testprodserve": "yarn appbuild && yarn prodserve",
     "build": "rollup -c",
     "watch": "rollup -c --watch",
     "testbuild": "rm dist/index.js ; yarn build && node src/test.js",
