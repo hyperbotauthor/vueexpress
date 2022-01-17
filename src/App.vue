@@ -102,7 +102,9 @@
         <div class="chat">
           <input type="text" v-on:keyup="chatmsgentered" />
           <div class="message" v-for="msg in messages" :key="`Math.random()`">
-            <div class="poster">{{ msg.profile.username || "@nonymous" }}</div>
+            <div class="poster">
+              {{ msg.createdBy.username || "@nonymous" }}
+            </div>
             <div class="time">
               {{ new Date(msg.createdAt).toLocaleString() }}
             </div>
@@ -183,7 +185,13 @@ function post(endpoint, payloadOpt) {
         const msg = ev.target.value;
         //console.log("sending", msg);
         ev.target.value = "";
-        post("/api/post", { msg });
+        post("/api/post", { msg }).then((json) => {
+          console.log("chat post response", json);
+
+          const exceeded = json.exceeded;
+
+          if (exceeded) window.alert(exceeded);
+        });
       }
     },
     login() {

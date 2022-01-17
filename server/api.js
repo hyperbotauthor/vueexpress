@@ -5,9 +5,15 @@ const {
   Client,
   randUserName,
   envIntElse,
+  envBlobElse,
   uid,
   PruneCollConfig,
+  SECOND,
+  MINUTE,
+  HOUR,
+  DAY,
   WEEK,
+  TimeQuota,
 } = require("../dist/index");
 
 setNode(require("fs"), require("path"), __dirname, process.env);
@@ -17,6 +23,18 @@ const flog = new fileLogger("api.log");
 const TICK_BASE = envIntElse("TICK_BASE", 60000);
 const MAX_SEEKS = envIntElse("MAX_SEEKS", 2);
 const CHAT_TIMEOUT = envIntElse("CHAT_TIMEOUT", WEEK);
+const CHAT_TIME_QUOTA = new TimeQuota().fromBlob(
+  envBlobElse("CHAT_TIME_QUOTA", {
+    name: "Chat",
+    items: [
+      { dur: 5 * SECOND, freq: 1 },
+      { dur: 1 * MINUTE, freq: 5 },
+      { dur: 1 * HOUR, freq: 100 },
+      { dur: 1 * DAY, freq: 500 },
+    ],
+  })
+);
+flog.log(CHAT_TIME_QUOTA.toString());
 
 var express = require("express");
 var router = express.Router();
@@ -214,11 +232,32 @@ function setupRouter() {
       return;
     }
 
-    messagesColl.upsertOneById(uid(), {
-      msg,
-      createdAt: Date.now(),
-      profile,
+    const exceeded = CHAT_TIME_QUOTA.exceeded(messagesColl.docs, (doc) => {
+      return doc.createdBy.id === profile.id;
     });
+
+    if (exceeded) {
+      res.send(
+        JSON.stringify({
+          exceeded,
+        })
+      );
+
+      return;
+    }
+
+    messagesColl
+      .upsertOneById(uid(), {
+        msg,
+        createdAt: Date.now(),
+        createdBy: profile,
+      })
+      .then((result) =>
+        res.send({
+          exceeded: false,
+          upsertResult: result,
+        })
+      );
   });
 
   async function loginByUserId(userId, res, profile) {

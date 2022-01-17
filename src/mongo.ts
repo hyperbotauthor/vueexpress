@@ -213,7 +213,8 @@ export class Collection {
       this.collection
         .drop()
         .then((result: any) => {
-          console.log("dropped", this.fullName(), result);
+          this.docs = [];
+          flog.log("dropped", this.fullName(), result);
           resolve(result);
         })
         .catch((err: any) => resolve({ error: err }));
