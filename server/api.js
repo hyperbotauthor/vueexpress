@@ -5,6 +5,7 @@ const {
   Client,
   randUserName,
   envIntElse,
+  uid,
 } = require("../dist/index");
 
 setNode(require("fs"), require("path"), __dirname, process.env);
@@ -78,7 +79,7 @@ const usersColl = db.collection("users", {
 
 function createProfile(userId, userName) {
   const profile = {
-    id: uid(),
+    id: userId,
     username: userName,
     identifiedAt: Date.now(),
     lastSeenAt: Date.now(),
@@ -395,7 +396,7 @@ client.connect().then(async (result) => {
 
   flog.log("setting up seeks check");
 
-  setTimeout(checkSeeks, TICK_BASE * 2);
+  setTimeout(checkSeeks, TICK_BASE * 4);
 });
 
 module.exports = router;
